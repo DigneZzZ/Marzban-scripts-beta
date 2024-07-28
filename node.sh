@@ -11,8 +11,13 @@ while [[ $# -gt 0 ]]; do
         shift # past argument
         ;;
         --name)
-        APP_NAME="$2"
-        shift # past argument
+        if [[ "$COMMAND" == "install" || "$COMMAND" == "install-script" ]]; then
+            APP_NAME="$2"
+            shift # past argument
+        else
+            echo "Error: --name parameter is only allowed with 'install' or 'install-script' commands."
+            exit 1
+        fi
         shift # past value
         ;;
         *)
@@ -21,9 +26,10 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# Установка значения по умолчанию, если APP_NAME не задан
-if [ -z "$APP_NAME" ]; then
-    APP_NAME="marzban-node"
+# Определение имени файла, если APP_NAME не задан и команда install или install-script
+if [[ "$COMMAND" == "install" || "$COMMAND" == "install-script" ]] && [ -z "$APP_NAME" ]; then
+    SCRIPT_NAME=$(basename "$0")
+    APP_NAME="${SCRIPT_NAME%.*}"
     APP_NAME_MAIN="marzban"
 fi
 
@@ -152,6 +158,7 @@ install_docker() {
 }
 
 
+
 install_marzban_node_script() {
     colorized_echo blue "Installing marzban script"
     TARGET_PATH="/usr/local/bin/$APP_NAME"
@@ -164,6 +171,44 @@ install_marzban_node_script() {
     chmod 755 $TARGET_PATH
     colorized_echo green "Marzban-NODE script installed successfully at $TARGET_PATH"
 }
+
+# Обработка команды
+case "$COMMAND" in
+    install)
+    install_command
+    ;;
+    update)
+    update_command
+    ;;
+    uninstall)
+    uninstall_command
+    ;;
+    up)
+    up_command
+    ;;
+    down)
+    down_command
+    ;;
+    restart)
+    restart_command
+    ;;
+    status)
+    status_command
+    ;;
+    logs)
+    logs_command
+    ;;
+    core-update)
+    update_core_command
+    ;;
+    install-script)
+    install_marzban_node_script
+    ;;
+    *)
+    usage
+    ;;
+esac
+
 
 install_marzban_node() {
     # Fetch releases
