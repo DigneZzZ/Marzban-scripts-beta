@@ -30,6 +30,12 @@ done
 if [[ "$COMMAND" == "install" || "$COMMAND" == "install-script" ]] && [ -z "$APP_NAME" ]; then
     APP_NAME="node"
 fi
+
+if [ -z "$APP_NAME" ]; then
+    SCRIPT_NAME=$(basename "$0")
+    APP_NAME="${SCRIPT_NAME%.*}"
+fi
+
 APP_NAME_MAIN="marzban"
 INSTALL_DIR="/root"
 APP_DIR="$INSTALL_DIR/$APP_NAME"
