@@ -181,19 +181,14 @@ install_marzban_node() {
     # Prompt the user to input the certificate
     print_info "Please paste the content of the Client Certificate, press ENTER on a new line when finished: "
 
-    # 
-    empty_line_count=0
+
     while IFS= read -r line; do
-        if [[ -z $line ]]; then
-            empty_line_count=$((empty_line_count + 1))
-            if [[ $empty_line_count -ge 2 ]]; then
-                break
-            fi
-        else
-            empty_line_count=0
-        fi
-        echo "$line" >> "$CERT_FILE"
+    if [[ -z $line ]]; then
+        break
+    fi
+    echo "$line" >> "$CERT_FILE"
     done
+
 
     print_info "Certificate saved to $CERT_FILE"
 
