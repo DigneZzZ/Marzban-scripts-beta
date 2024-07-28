@@ -1,19 +1,38 @@
 #!/usr/bin/env bash
 set -e
 
-INSTALL_DIR="/root"
+# Обработка параметров командной строки
+while [[ $# -gt 0 ]]; do
+    key="$1"
+
+    case $key in
+        --name)
+        APP_NAME="$2"
+        shift # past argument
+        shift # past value
+        ;;
+        *)    # неизвестный параметр
+        shift # past argument
+        ;;
+    esac
+done
+
+# Установка значения по умолчанию, если APP_NAME не задан
 if [ -z "$APP_NAME" ]; then
     APP_NAME="marzban-node"
     APP_NAME_MAIN="marzban"
 fi
+
+INSTALL_DIR="/root"
 APP_DIR="$INSTALL_DIR/$APP_NAME"
 DATA_DIR="/var/lib/$APP_NAME"
 DATA_MAIN_DIR="/var/lib/$APP_NAME_MAIN"
 COMPOSE_FILE="$APP_DIR/docker-compose.yml"
 LAST_XRAY_CORES=5
 
-FETCH_REPO="Gozargah/Marzban-node"
-SCRIPT_URL="https://github.com/$FETCH_REPO/raw/master/marzban-node.sh"
+
+FETCH_REPO="DigneZzZ/Marzban-scripts-beta"
+SCRIPT_URL="https://github.com/$FETCH_REPO/raw/main/node.sh"
 
 # Fetch IP address from ipinfo.io API
 NODE_IP=$(curl -s https://ipinfo.io/ip)
