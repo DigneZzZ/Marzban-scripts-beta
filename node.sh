@@ -38,7 +38,7 @@ DATA_DIR="/var/lib/$APP_NAME"
 DATA_MAIN_DIR="/var/lib/$APP_NAME_MAIN"
 COMPOSE_FILE="$APP_DIR/docker-compose.yml"
 LAST_XRAY_CORES=5
-
+CERT_FILE="$DATA_DIR/cert.pem"
 FETCH_REPO="DigneZzZ/Marzban-scripts-beta"
 SCRIPT_URL="https://github.com/$FETCH_REPO/raw/main/node.sh"
 
