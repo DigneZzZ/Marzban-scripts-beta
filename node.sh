@@ -169,13 +169,11 @@ install_marzban_node() {
     mkdir -p "$APP_DIR"
     mkdir -p "$DATA_MAIN_DIR"
 
-# Проверка на существование директории перед созданием файла
-if [ ! -d "$(dirname "$CERT_FILE")" ]; then
-    mkdir -p "$(dirname "$CERT_FILE")"
-fi
+    # Проверка на существование файла перед его очисткой
+    if [ -f "$CERT_FILE" ]; then
+        > "$CERT_FILE"
+    fi
 
-# Remove the file if it already exists and create a new one
-> "$CERT_FILE"
 
     # Function to print information to the user
     print_info() {
