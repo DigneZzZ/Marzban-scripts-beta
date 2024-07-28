@@ -143,14 +143,16 @@ install_marzban_node() {
     mkdir -p "$APP_DIR"
     mkdir -p "$DATA_MAIN_DIR"
 
+    # Ensure the certificate directory exists
+    mkdir -p "$(dirname "$CERT_FILE")"
+
     # Remove the file if it already exists and create a new one
     > "$CERT_FILE"
 
     # Function to print information to the user
     print_info() {
-    echo -e "\033[1;34m$1\033[0m"
+        echo -e "\033[1;34m$1\033[0m"
     }
-
     # Prompt the user to input the certificate
     print_info "Please paste the content of the Client Certificate, press ENTER on a new line when finished: "
 
