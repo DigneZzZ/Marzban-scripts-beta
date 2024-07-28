@@ -1,3 +1,4 @@
+
 #!/usr/bin/env bash
 set -e
 
@@ -493,7 +494,7 @@ status_command() {
 
     detect_compose
 
-    if ! is_marzban_node_up(); then
+    if ! is_marzban_node_up; then
         echo -n "Status: "
         colorized_echo blue "Down"
         exit 1
