@@ -40,15 +40,8 @@ DATA_MAIN_DIR="/var/lib/$APP_NAME_MAIN"
 COMPOSE_FILE="$APP_DIR/docker-compose.yml"
 LAST_XRAY_CORES=5
 
-
-FETCH_REPO="DigneZzZ/Marzban-scripts-beta"
-SCRIPT_URL="https://github.com/$FETCH_REPO/raw/main/node.sh"
-
-# Fetch IP address from ipinfo.io API
-NODE_IP=$(curl -s https://ipinfo.io/ip)
-
-# File to save the certificate
-CERT_FILE="$DATA_DIR/cert.pem"
+FETCH_REPO="Gozargah/Marzban-node"
+SCRIPT_URL="https://github.com/$FETCH_REPO/raw/master/marzban-node.sh"
 
 colorized_echo() {
     local color=$1
@@ -157,8 +150,6 @@ install_docker() {
     colorized_echo green "Docker installed successfully"
 }
 
-
-
 install_marzban_node_script() {
     colorized_echo blue "Installing marzban script"
     TARGET_PATH="/usr/local/bin/$APP_NAME"
@@ -171,44 +162,6 @@ install_marzban_node_script() {
     chmod 755 $TARGET_PATH
     colorized_echo green "Marzban-NODE script installed successfully at $TARGET_PATH"
 }
-
-# Обработка команды
-case "$COMMAND" in
-    install)
-    install_command
-    ;;
-    update)
-    update_command
-    ;;
-    uninstall)
-    uninstall_command
-    ;;
-    up)
-    up_command
-    ;;
-    down)
-    down_command
-    ;;
-    restart)
-    restart_command
-    ;;
-    status)
-    status_command
-    ;;
-    logs)
-    logs_command
-    ;;
-    core-update)
-    update_core_command
-    ;;
-    install-script)
-    install_marzban_node_script
-    ;;
-    *)
-    usage
-    ;;
-esac
-
 
 install_marzban_node() {
     # Fetch releases
@@ -307,9 +260,9 @@ EOL
 }
 
 uninstall_marzban_node_script() {
-    if [ -f "/usr/local/bin/marzban-node" ]; then
+    if [ -f "/usr/local/bin/$APP_NAME" ]; then
         colorized_echo yellow "Removing marzban-node script"
-        rm "/usr/local/bin/marzban-node"
+        rm "/usr/local/bin/$APP_NAME"
     fi
 }
 
@@ -358,7 +311,7 @@ follow_marzban_node_logs() {
 
 update_marzban_node_script() {
     colorized_echo blue "Updating marzban-node script"
-    curl -sSL $SCRIPT_URL | install -m 755 /dev/stdin /usr/local/bin/marzban-node
+    curl -sSL $SCRIPT_URL | install -m 755 /dev/stdin /usr/local/bin/$APP_NAME
     colorized_echo green "marzban-node script updated successfully"
 }
 
@@ -820,29 +773,39 @@ usage() {
     echo
 }
 
-case "$1" in
-    up)
-    shift; up_command "$@";;
-    down)
-    shift; down_command "$@";;
-    restart)
-    shift; restart_command "$@";;
-    status)
-    shift; status_command "$@";;
-    logs)
-    shift; logs_command "$@";;
-    cli)
-    shift; cli_command "$@";;
+# Обработка команды
+case "$COMMAND" in
     install)
-    shift; install_command "$@";;
+    install_command
+    ;;
     update)
-    shift; update_command "$@";;
+    update_command
+    ;;
     uninstall)
-    shift; uninstall_command "$@";;
-    install-script)
-    shift; install_marzban_node_script "$@";;
+    uninstall_command
+    ;;
+    up)
+    up_command
+    ;;
+    down)
+    down_command
+    ;;
+    restart)
+    restart_command
+    ;;
+    status)
+    status_command
+    ;;
+    logs)
+    logs_command
+    ;;
     core-update)
-    shift; update_core_command "$@";;
+    update_core_command
+    ;;
+    install-script)
+    install_marzban_node_script
+    ;;
     *)
-    usage;;
+    usage
+    ;;
 esac
