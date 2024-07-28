@@ -246,7 +246,7 @@ services:
     restart: always
     network_mode: host
     environment:
-      SSL_CLIENT_CERT_FILE: "$DATA_DIR/cert.pem"
+      SSL_CLIENT_CERT_FILE: "/var/lib/marzban-node/cert.pem"
       SERVICE_PORT: "$SERVICE_PORT"
       XRAY_API_PORT: "$XRAY_API_PORT"
 EOL
