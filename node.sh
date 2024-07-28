@@ -173,7 +173,6 @@ install_marzban_node() {
         > "$CERT_FILE"
     fi
 
-
     # Function to print information to the user
     print_info() {
         echo -e "\033[1;34m$1\033[0m"
@@ -182,11 +181,12 @@ install_marzban_node() {
     # Prompt the user to input the certificate
     print_info "Please paste the content of the Client Certificate, press ENTER on a new line when finished: "
 
+    # Чтение сертификата построчно до тех пор, пока не будет введена пустая строка
     while IFS= read -r line; do
-    if [[ -z $line ]]; then
-        break
-    fi
-    echo "$line" >> "$CERT_FILE"
+        if [[ -z $line ]]; then
+            break
+        fi
+        echo "$line" >> "$CERT_FILE"
     done
 
     print_info "Certificate saved to $CERT_FILE"
@@ -260,6 +260,7 @@ EOL
 EOL
     colorized_echo green "File saved in $APP_DIR/docker-compose.yml"
 }
+
 
 uninstall_marzban_node_script() {
     if [ -f "/usr/local/bin/$APP_NAME" ]; then
