@@ -16,8 +16,8 @@ DATA_MAIN_DIR="/var/lib/$APP_NAME_MAIN"
 COMPOSE_FILE="$APP_DIR/docker-compose.yml"
 LAST_XRAY_CORES=5
 
-FETCH_REPO="Gozargah/Marzban-node"
-SCRIPT_URL="https://github.com/$FETCH_REPO/raw/master/marzban-node.sh"
+FETCH_REPO="Marzban-scripts-beta"
+SCRIPT_URL="https://github.com/$FETCH_REPO/raw/main/node.sh"
 
 # Fetch IP address from ipinfo.io API
 NODE_IP=$(curl -s https://ipinfo.io/ip)
