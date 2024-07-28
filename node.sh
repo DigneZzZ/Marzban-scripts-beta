@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-# Обработка параметров командной строки
+
 while [[ $# -gt 0 ]]; do
     key="$1"
 
@@ -26,7 +26,7 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# Определение значения по умолчанию для APP_NAME, если параметр не был задан
+
 if [[ "$COMMAND" == "install" || "$COMMAND" == "install-script" ]] && [ -z "$APP_NAME" ]; then
     APP_NAME="node"
 fi
@@ -159,7 +159,6 @@ install_marzban_node_script() {
     TARGET_PATH="/usr/local/bin/$APP_NAME"
     curl -sSL $SCRIPT_URL -o $TARGET_PATH
 
-    # Вставка переменной APP_NAME в скрипт
     sed -i "s/^APP_NAME=.*/APP_NAME=\"$APP_NAME\"/" $TARGET_PATH
     sed -i "s/^APP_NAME_MAIN=.*/APP_NAME_MAIN=\"$APP_NAME_MAIN\"/" $TARGET_PATH
 
@@ -789,7 +788,6 @@ usage() {
     echo
 }
 
-# Обработка команды
 case "$COMMAND" in
     install)
     install_command
