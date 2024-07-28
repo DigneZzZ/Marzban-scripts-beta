@@ -241,7 +241,7 @@ install_marzban_node() {
     cat > "$COMPOSE_FILE" <<EOL
 services:
   marzban-node:
-    container_name: marzban-node
+    container_name: $APP_NAME
     image: gozargah/marzban-node:latest
     restart: always
     network_mode: host
