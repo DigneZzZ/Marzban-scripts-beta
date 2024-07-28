@@ -776,9 +776,16 @@ usage() {
     echo "  Your cert file here: $CERT_FILE"
     echo "  Your IP is: $NODE_IP"
     echo
-    echo "  Current Ports:"
-    echo "    SERVICE_PORT: ${SERVICE_PORT:-62050}"
-    echo "    XRAY_API_PORT: ${XRAY_API_PORT:-62051}"
+   echo "  Current port configuration:"
+    if [ -f "$COMPOSE_FILE" ]; then
+        SERVICE_PORT=$(grep -oP 'SERVICE_PORT:\s*\K\d+' "$COMPOSE_FILE")
+        XRAY_API_PORT=$(grep -oP 'XRAY_API_PORT:\s*\K\d+' "$COMPOSE_FILE")
+        echo "  SERVICE_PORT: $SERVICE_PORT"
+        echo "  XRAY_API_PORT: $XRAY_API_PORT"
+    else
+        echo "  SERVICE_PORT: $DEFAULT_SERVICE_PORT"
+        echo "  XRAY_API_PORT: $DEFAULT_XRAY_API_PORT"
+    fi
     echo
 }
 
