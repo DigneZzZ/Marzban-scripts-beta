@@ -154,6 +154,7 @@ install_marzban_node() {
     DATA_DIR="/var/lib/$APP_NAME"
     DATA_MAIN_DIR="/var/lib/$APP_NAME_MAIN"
     CERT_FILE="$DATA_DIR/cert.pem"
+    COMPOSE_FILE="$APP_DIR/docker-compose.yml"
 
     # Prompt user for service port
     read -p "Enter the service port (default: $DEFAULT_SERVICE_PORT): " SERVICE_PORT
@@ -211,15 +212,15 @@ services:
     restart: always
     network_mode: host
     environment:
-      SSL_CLIENT_CERT_FILE: "$DATA_DIR/cert.pem"
-      SERVICE_PORT: "$SERVICE_PORT"
-      XRAY_API_PORT: "$XRAY_API_PORT"
+      - SSL_CLIENT_CERT_FILE=$CERT_FILE
+      - SERVICE_PORT=$SERVICE_PORT
+      - XRAY_API_PORT=$XRAY_API_PORT
 EOL
 
     # Add SERVICE_PROTOCOL line only if REST is selected
     if [[ "$USE_REST" = true ]]; then
         cat >> "$COMPOSE_FILE" <<EOL
-      SERVICE_PROTOCOL: "rest"
+      - SERVICE_PROTOCOL=rest
 EOL
     fi
 
@@ -453,7 +454,7 @@ restart_command() {
 
     down_marzban_node
     up_marzban_node
-    if [ "$no_logs" = false ]; then
+    if [ "$no_logs" = false]; then
         follow_marzban_node_logs
     fi
 }
@@ -703,7 +704,7 @@ update_core_command() {
 
     # Restart Marzban
     colorized_echo red "Restarting Marzban-node..."
-    $APP_NAME restart -n
+    $SERVICE_NAME restart -n
     colorized_echo blue "Installation XRAY-CORE version $selected_version completed."
 }
 
