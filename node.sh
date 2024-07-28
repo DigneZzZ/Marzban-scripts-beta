@@ -26,10 +26,9 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# Определение имени файла, если APP_NAME не задан и команда install или install-script
+# Определение значения по умолчанию для APP_NAME, если параметр не был задан
 if [[ "$COMMAND" == "install" || "$COMMAND" == "install-script" ]] && [ -z "$APP_NAME" ]; then
-    SCRIPT_NAME=$(basename "$0")
-    APP_NAME="${SCRIPT_NAME%.*}"
+    APP_NAME="node"
     APP_NAME_MAIN="marzban"
 fi
 
