@@ -6,13 +6,17 @@ while [[ $# -gt 0 ]]; do
     key="$1"
 
     case $key in
+        install|update|uninstall|up|down|restart|status|logs|core-update|install-script)
+        COMMAND="$1"
+        shift # past argument
+        ;;
         --name)
         APP_NAME="$2"
         shift # past argument
         shift # past value
         ;;
-        *)    # неизвестный параметр
-        shift # past argument
+        *)
+        shift # past unknown argument
         ;;
     esac
 done
@@ -147,10 +151,18 @@ install_docker() {
     colorized_echo green "Docker installed successfully"
 }
 
+
 install_marzban_node_script() {
     colorized_echo blue "Installing marzban script"
-    curl -sSL $SCRIPT_URL | install -m 755 /dev/stdin /usr/local/bin/marzban-node
-    colorized_echo green "Marzban-NODE script installed successfully"
+    TARGET_PATH="/usr/local/bin/$APP_NAME"
+    curl -sSL $SCRIPT_URL -o $TARGET_PATH
+
+    # Вставка переменной APP_NAME в скрипт
+    sed -i "s/^APP_NAME=.*/APP_NAME=\"$APP_NAME\"/" $TARGET_PATH
+    sed -i "s/^APP_NAME_MAIN=.*/APP_NAME_MAIN=\"$APP_NAME_MAIN\"/" $TARGET_PATH
+
+    chmod 755 $TARGET_PATH
+    colorized_echo green "Marzban-NODE script installed successfully at $TARGET_PATH"
 }
 
 install_marzban_node() {
