@@ -1,4 +1,3 @@
-
 #!/usr/bin/env bash
 set -e
 
@@ -7,24 +6,21 @@ DEFAULT_SERVICE_PORT=62050
 DEFAULT_XRAY_API_PORT=62051
 
 INSTALL_DIR="/root"
-if [ -z "$APP_NAME" ]; then
-    APP_NAME="marzban-node"
-    APP_NAME_MAIN="marzban"
-fi
-APP_DIR="$INSTALL_DIR/$APP_NAME"
-DATA_DIR="/var/lib/$APP_NAME"
-DATA_MAIN_DIR="/var/lib/$APP_NAME_MAIN"
-COMPOSE_FILE="$APP_DIR/docker-compose.yml"
+
+APP_NAME_MAIN="marzban"
+APP_DIR=""
+DATA_DIR=""
+DATA_MAIN_DIR=""
+COMPOSE_FILE=""
 LAST_XRAY_CORES=5
 
-FETCH_REPO="Marzban-scripts-beta"
-SCRIPT_URL="https://github.com/$FETCH_REPO/raw/main/node.sh"
+FETCH_REPO="Gozargah/Marzban-node"
+SCRIPT_URL="https://github.com/$FETCH_REPO/raw/master/marzban-node.sh"
 
 # Fetch IP address from ipinfo.io API
 NODE_IP=$(curl -s https://ipinfo.io/ip)
 
-# File to save the certificate
-CERT_FILE="$DATA_DIR/cert.pem"
+# Function to print colored text
 colorized_echo() {
     local color=$1
     local text=$2
@@ -59,11 +55,11 @@ detect_os() {
     # Detect the operating system
     if [ -f /etc/lsb-release ]; then
         OS=$(lsb_release -si)
-        elif [ -f /etc/os-release ]; then
+    elif [ -f /etc/os-release ]; then
         OS=$(awk -F= '/^NAME/{print $2}' /etc/os-release | tr -d '"')
-        elif [ -f /etc/redhat-release ]; then
+    elif [ -f /etc/redhat-release ]; then
         OS=$(cat /etc/redhat-release | awk '{print $1}')
-        elif [ -f /etc/arch-release ]; then
+    elif [ -f /etc/arch-release ]; then
         OS="Arch"
     else
         colorized_echo red "Unsupported operating system"
@@ -76,14 +72,14 @@ detect_and_update_package_manager() {
     if [[ "$OS" == "Ubuntu"* ]] || [[ "$OS" == "Debian"* ]]; then
         PKG_MANAGER="apt-get"
         $PKG_MANAGER update
-        elif [[ "$OS" == "CentOS"* ]] || [[ "$OS" == "AlmaLinux"* ]]; then
+    elif [[ "$OS" == "CentOS"* ]] || [[ "$OS" == "AlmaLinux"* ]]; then
         PKG_MANAGER="yum"
         $PKG_MANAGER update -y
         $PKG_MANAGER install -y epel-release
-        elif [ "$OS" == "Fedora"* ]; then
+    elif [ "$OS" == "Fedora"* ]; then
         PKG_MANAGER="dnf"
         $PKG_MANAGER update
-        elif [ "$OS" == "Arch" ]; then
+    elif [ "$OS" == "Arch" ]; then
         PKG_MANAGER="pacman"
         $PKG_MANAGER -Sy
     else
@@ -96,7 +92,7 @@ detect_compose() {
     # Check if docker compose command exists
     if docker compose >/dev/null 2>&1; then
         COMPOSE='docker compose'
-        elif docker-compose >/dev/null 2>&1; then
+    elif docker-compose >/dev/null 2>&1; then
         COMPOSE='docker-compose'
     else
         colorized_echo red "docker compose not found"
@@ -113,11 +109,11 @@ install_package () {
     colorized_echo blue "Installing $PACKAGE"
     if [[ "$OS" == "Ubuntu"* ]] || [[ "$OS" == "Debian"* ]]; then
         $PKG_MANAGER -y install "$PACKAGE"
-        elif [[ "$OS" == "CentOS"* ]] || [[ "$OS" == "AlmaLinux"* ]]; then
+    elif [[ "$OS" == "CentOS"* ]] || [[ "$OS" == "AlmaLinux"* ]]; then
         $PKG_MANAGER install -y "$PACKAGE"
-        elif [ "$OS" == "Fedora"* ]; then
+    elif [ "$OS" == "Fedora"* ]; then
         $PKG_MANAGER install -y "$PACKAGE"
-        elif [ "$OS" == "Arch" ]; then
+    elif [ "$OS" == "Arch" ]; then
         $PKG_MANAGER -S --noconfirm "$PACKAGE"
     else
         colorized_echo red "Unsupported operating system"
@@ -133,9 +129,10 @@ install_docker() {
 }
 
 install_marzban_node_script() {
+    local script_path="/usr/local/bin/$SERVICE_NAME"
     colorized_echo blue "Installing marzban script"
-    curl -sSL $SCRIPT_URL | install -m 755 /dev/stdin /usr/local/bin/marzban-node
-    colorized_echo green "Marzban-NODE script installed successfully"
+    curl -sSL $SCRIPT_URL | install -m 755 /dev/stdin "$script_path"
+    colorized_echo green "Marzban-NODE script installed successfully at $script_path"
 }
 
 validate_port() {
@@ -151,6 +148,13 @@ install_marzban_node() {
     read -p "Enter the service name (default: $DEFAULT_SERVICE_NAME): " SERVICE_NAME
     SERVICE_NAME=${SERVICE_NAME:-$DEFAULT_SERVICE_NAME}
 
+    # Use service name as installation directory
+    APP_NAME=$SERVICE_NAME
+    APP_DIR="$INSTALL_DIR/$APP_NAME"
+    DATA_DIR="/var/lib/$APP_NAME"
+    DATA_MAIN_DIR="/var/lib/$APP_NAME_MAIN"
+    CERT_FILE="$DATA_DIR/cert.pem"
+
     # Prompt user for service port
     read -p "Enter the service port (default: $DEFAULT_SERVICE_PORT): " SERVICE_PORT
     SERVICE_PORT=${SERVICE_PORT:-$DEFAULT_SERVICE_PORT}
@@ -161,13 +165,6 @@ install_marzban_node() {
     XRAY_API_PORT=${XRAY_API_PORT:-$DEFAULT_XRAY_API_PORT}
     validate_port $XRAY_API_PORT
 
-    # Prompt user for installation directory
-    read -p "Enter the installation directory (default: $APP_NAME): " INSTALL_DIR_INPUT
-    APP_NAME=${INSTALL_DIR_INPUT:-$APP_NAME}
-    APP_DIR="$INSTALL_DIR/$APP_NAME"
-    DATA_DIR="/var/lib/$APP_NAME"
-    DATA_MAIN_DIR="/var/lib/$APP_NAME_MAIN"
-
     mkdir -p "$DATA_DIR"
     mkdir -p "$APP_DIR"
     mkdir -p "$DATA_MAIN_DIR"
@@ -177,17 +174,17 @@ install_marzban_node() {
 
     # Function to print information to the user
     print_info() {
-    echo -e "\033[1;34m$1\033[0m"
+        echo -e "\033[1;34m$1\033[0m"
     }
 
     # Prompt the user to input the certificate
     print_info "Please paste the content of the Client Certificate, press ENTER on a new line when finished: "
 
     while IFS= read -r line; do
-    if [[ -z $line ]]; then
-        break
-    fi
-    echo "$line" >> "$CERT_FILE"
+        if [[ -z $line ]]; then
+            break
+        fi
+        echo "$line" >> "$CERT_FILE"
     done
 
     print_info "Certificate saved to $CERT_FILE"
@@ -204,19 +201,15 @@ install_marzban_node() {
     fi
 
     colorized_echo blue "Generating compose file"
-    # curl -sL "$FILES_URL_PREFIX/docker-compose.yml" -o "$APP_DIR/docker-compose.yml"
 
     # Write content to the file
     cat > "$COMPOSE_FILE" <<EOL
 services:
   $SERVICE_NAME:
     container_name: $SERVICE_NAME
-    # build: .
     image: gozargah/marzban-node:latest
     restart: always
     network_mode: host
-
-    # env_file: .env
     environment:
       SSL_CLIENT_CERT_FILE: "$DATA_DIR/cert.pem"
       SERVICE_PORT: "$SERVICE_PORT"
@@ -231,45 +224,36 @@ EOL
     fi
 
     cat >> "$COMPOSE_FILE" <<EOL
-
     volumes:
       - $DATA_MAIN_DIR:/var/lib/marzban
       - $DATA_DIR:/var/lib/marzban-node
 EOL
+
     colorized_echo green "File saved in $APP_DIR/docker-compose.yml"
 }
 
 uninstall_marzban_node_script() {
-    if [ -f "/usr/local/bin/marzban-node" ]; then
-        colorized_echo yellow "Removing marzban-node script"
-        rm "/usr/local/bin/marzban-node"
+    local script_path="/usr/local/bin/$SERVICE_NAME"
+    if [ -f "$script_path" ]; then
+        colorized_echo yellow "Removing $SERVICE_NAME script"
+        rm "$script_path"
     fi
 }
 
 uninstall_marzban_node() {
     if [ -d "$APP_DIR" ]; then
         colorized_echo yellow "Removing directory: $APP_DIR"
-        rm -r "$APP_DIR"
+        rm -rf "$APP_DIR"
     fi
-}
 
-uninstall_marzban_node_docker_images() {
-    images=$(docker images | grep marzban-node | awk '{print $3}')
-
-    if [ -n "$images" ]; then
-        colorized_echo yellow "Removing Docker images of Marzban-node"
-        for image in $images; do
-            if docker rmi "$image" >/dev/null 2>&1; then
-                colorized_echo yellow "Image $image removed"
-            fi
-        done
-    fi
-}
-
-uninstall_marzban_node_data_files() {
     if [ -d "$DATA_DIR" ]; then
         colorized_echo yellow "Removing directory: $DATA_DIR"
-        rm -r "$DATA_DIR"
+        rm -rf "$DATA_DIR"
+    fi
+
+    if [ -d "$DATA_MAIN_DIR" ]; then
+        colorized_echo yellow "Removing directory: $DATA_MAIN_DIR"
+        rm -rf "$DATA_MAIN_DIR"
     fi
 }
 
@@ -290,8 +274,7 @@ follow_marzban_node_logs() {
 }
 
 update_marzban_node_script() {
-    colorized_echo blue "Updating marzban-node script"
-    curl -sSL $SCRIPT_URL | install -m 755 /dev/stdin /usr/local/bin/marzban-node
+    install_marzban_node_script
     colorized_echo green "marzban-node script updated successfully"
 }
 
@@ -300,7 +283,7 @@ update_marzban_node() {
 }
 
 is_marzban_node_installed() {
-    if [ -d $APP_DIR ]; then
+    if [ -d "$APP_DIR" ]; then
         return 0
     else
         return 1
@@ -320,7 +303,7 @@ install_command() {
     # Check if marzban is already installed
     if is_marzban_node_installed; then
         colorized_echo red "Marzban-node is already installed at $APP_DIR"
-        read -p "Do you want to override the previous installation? (y/n) "
+        read -p "Do you want to override the previous installation? (y/n) " REPLY
         if [[ ! $REPLY =~ ^[Yy]$ ]]; then
             colorized_echo red "Aborted installation"
             exit 1
@@ -341,7 +324,7 @@ install_command() {
     install_marzban_node
     up_marzban_node
     follow_marzban_node_logs
-    echo "Use your IP: $NODE_IP and defaults ports: 62050 and 62051 to setup your Marzban Main Panel"
+    echo "Use your IP: $NODE_IP and defaults ports: $SERVICE_PORT and $XRAY_API_PORT to setup your Marzban Main Panel"
 }
 
 uninstall_command() {
@@ -352,7 +335,7 @@ uninstall_command() {
         exit 1
     fi
 
-    read -p "Do you really want to uninstall Marzban-node? (y/n) "
+    read -p "Do you really want to uninstall Marzban-node? (y/n) " REPLY
     if [[ ! $REPLY =~ ^[Yy]$ ]]; then
         colorized_echo red "Aborted"
         exit 1
@@ -364,15 +347,7 @@ uninstall_command() {
     fi
     uninstall_marzban_node_script
     uninstall_marzban_node
-    uninstall_marzban_node_docker_images
-
-    read -p "Do you want to remove Marzban-node data files too ($DATA_DIR)? (y/n) "
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        colorized_echo green "Marzban-node uninstalled successfully"
-    else
-        uninstall_marzban_node_data_files
-        colorized_echo green "Marzban-node uninstalled successfully"
-    fi
+    colorized_echo green "Marzban-node uninstalled successfully"
 }
 
 up_command() {
@@ -397,7 +372,7 @@ up_command() {
             *)
                 echo "Error: Invalid option: $1" >&2
                 help
-                exit 0
+                exit 1
             ;;
         esac
         shift
@@ -462,7 +437,7 @@ restart_command() {
             *)
                 echo "Error: Invalid option: $1" >&2
                 help
-                exit 0
+                exit 1
             ;;
         esac
         shift
@@ -541,7 +516,7 @@ logs_command() {
             *)
                 echo "Error: Invalid option: $1" >&2
                 help
-                exit 0
+                exit 1
             ;;
         esac
         shift
@@ -733,7 +708,7 @@ update_core_command() {
 }
 
 usage() {
-    colorized_echo red "Usage: $APP_NAME [command]"
+    colorized_echo red "Usage: $SERVICE_NAME [command]"
     echo
     echo "Commands:"
     echo "  up              Start services"
@@ -749,33 +724,30 @@ usage() {
     echo "  "
     echo "  Your cert file here: $CERT_FILE"
     echo "  Your IP is: $NODE_IP"
-
     echo
 }
 
 case "$1" in
     up)
-    shift; up_command "$@";;
+        shift; up_command "$@";;
     down)
-    shift; down_command "$@";;
+        shift; down_command "$@";;
     restart)
-    shift; restart_command "$@";;
+        shift; restart_command "$@";;
     status)
-    shift; status_command "$@";;
+        shift; status_command "$@";;
     logs)
-    shift; logs_command "$@";;
-    cli)
-    shift; cli_command "$@";;
+        shift; logs_command "$@";;
     install)
-    shift; install_command "$@";;
+        shift; install_command "$@";;
     update)
-    shift; update_command "$@";;
+        shift; update_command "$@";;
     uninstall)
-    shift; uninstall_command "$@";;
+        shift; uninstall_command "$@";;
     install-script)
-    shift; install_marzban_node_script "$@";;
+        shift; install_marzban_node_script "$@";;
     core-update)
-    shift; update_core_command "$@";;
+        shift; update_core_command "$@";;
     *)
-    usage;;
+        usage;;
 esac
