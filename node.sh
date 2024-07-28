@@ -135,12 +135,19 @@ install_marzban_node_script() {
     colorized_echo green "Marzban-NODE script installed successfully at $script_path"
 }
 
-validate_port() {
-    local port=$1
-    if ! [[ $port =~ ^[0-9]+$ ]] || [ "$port" -lt 1 ] || [ "$port" -gt 65535 ]; then
-        colorized_echo red "Invalid port: $port. Please enter a port number between 1 and 65535."
-        exit 1
-    fi
+prompt_for_port() {
+    local port
+    local default_port=$1
+    while true; do
+        read -p "Enter the port (default: $default_port): " port
+        port=${port:-$default_port}
+        if [[ $port =~ ^[0-9]+$ ]] && [ "$port" -ge 1 ] && [ "$port" -le 65535 ]; then
+            echo $port
+            break
+        else
+            colorized_echo red "Invalid port: $port. Please enter a port number between 1 and 65535."
+        fi
+    done
 }
 
 install_marzban_node() {
@@ -157,14 +164,10 @@ install_marzban_node() {
     COMPOSE_FILE="$APP_DIR/docker-compose.yml"
 
     # Prompt user for service port
-    read -p "Enter the service port (default: $DEFAULT_SERVICE_PORT): " SERVICE_PORT
-    SERVICE_PORT=${SERVICE_PORT:-$DEFAULT_SERVICE_PORT}
-    validate_port $SERVICE_PORT
+    SERVICE_PORT=$(prompt_for_port $DEFAULT_SERVICE_PORT)
 
     # Prompt user for Xray API port
-    read -p "Enter the Xray API port (default: $DEFAULT_XRAY_API_PORT): " XRAY_API_PORT
-    XRAY_API_PORT=${XRAY_API_PORT:-$DEFAULT_XRAY_API_PORT}
-    validate_port $XRAY_API_PORT
+    XRAY_API_PORT=$(prompt_for_port $DEFAULT_XRAY_API_PORT)
 
     mkdir -p "$DATA_DIR"
     mkdir -p "$APP_DIR"
@@ -454,7 +457,7 @@ restart_command() {
 
     down_marzban_node
     up_marzban_node
-    if [ "$no_logs" = false]; then
+    if [ "$no_logs" = false ]; then
         follow_marzban_node_logs
     fi
 }
@@ -477,7 +480,7 @@ status_command() {
     fi
 
     echo -n "Status: "
-    colorized_echo green "Up"
+        colorized_echo green "Up"
 
     json=$($COMPOSE -f $COMPOSE_FILE ps -a --format=json)
     services=$(echo "$json" | jq -r 'if type == "array" then .[] else . end | .Service')
