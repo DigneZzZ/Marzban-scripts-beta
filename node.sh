@@ -29,9 +29,8 @@ done
 # Определение значения по умолчанию для APP_NAME, если параметр не был задан
 if [[ "$COMMAND" == "install" || "$COMMAND" == "install-script" ]] && [ -z "$APP_NAME" ]; then
     APP_NAME="node"
-    APP_NAME_MAIN="marzban"
 fi
-
+APP_NAME_MAIN="marzban"
 INSTALL_DIR="/root"
 APP_DIR="$INSTALL_DIR/$APP_NAME"
 DATA_DIR="/var/lib/$APP_NAME"
