@@ -35,6 +35,8 @@ if [ -z "$APP_NAME" ]; then
     SCRIPT_NAME=$(basename "$0")
     APP_NAME="${SCRIPT_NAME%.*}"
 fi
+# Fetch IP address from ipinfo.io API
+NODE_IP=$(curl -s https://ipinfo.io/ip)
 
 APP_NAME_MAIN="marzban"
 INSTALL_DIR="/root"
@@ -758,6 +760,8 @@ update_core_command() {
 }
 
 usage() {
+DEFAULT_SERVICE_PORT="62050"
+DEFAULT_XRAY_API_PORT="1545"
     colorized_echo red "Usage: $APP_NAME [command]"
     echo
     echo "Commands:"
@@ -775,16 +779,16 @@ usage() {
     echo "  Your cert file here: $CERT_FILE"
     echo "  Your IP is: $NODE_IP"
     echo
-   echo "  Current port configuration:"
-    if [ -f "$COMPOSE_FILE" ]; then
-        SERVICE_PORT=$(grep -oP 'SERVICE_PORT:\s*\K\d+' "$COMPOSE_FILE")
-        XRAY_API_PORT=$(grep -oP 'XRAY_API_PORT:\s*\K\d+' "$COMPOSE_FILE")
-        echo "  SERVICE_PORT: $SERVICE_PORT"
-        echo "  XRAY_API_PORT: $XRAY_API_PORT"
-    else
-        echo "  SERVICE_PORT: $DEFAULT_SERVICE_PORT"
-        echo "  XRAY_API_PORT: $DEFAULT_XRAY_API_PORT"
-    fi
+    echo "  Current port configuration:"
+    DEFAULT_SERVICE_PORT="62050"
+    DEFAULT_XRAY_API_PORT="62051"
+    SERVICE_PORT=$(awk -F': ' '/SERVICE_PORT:/ {gsub(/"/, "", $2); print $2}' "$COMPOSE_FILE")
+    XRAY_API_PORT=$(awk -F': ' '/XRAY_API_PORT:/ {gsub(/"/, "", $2); print $2}' "$COMPOSE_FILE")
+    SERVICE_PORT=${SERVICE_PORT:-$DEFAULT_SERVICE_PORT}
+    XRAY_API_PORT=${XRAY_API_PORT:-$DEFAULT_XRAY_API_PORT}
+    colorized_echo magenta "  SERVICE_PORT: $SERVICE_PORT"
+    colorized_echo magenta "  XRAY_API_PORT: $XRAY_API_PORT"
+
     echo
 }
 
