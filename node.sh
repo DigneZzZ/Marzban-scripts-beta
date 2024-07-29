@@ -35,9 +35,6 @@ if [ -z "$APP_NAME" ]; then
     SCRIPT_NAME=$(basename "$0")
     APP_NAME="${SCRIPT_NAME%.*}"
 fi
-# Fetch IP address from ipinfo.io API
-NODE_IP=$(curl -s https://ipinfo.io/ip)
-
 APP_NAME_MAIN="marzban"
 INSTALL_DIR="/root"
 APP_DIR="$INSTALL_DIR/$APP_NAME"
@@ -760,8 +757,8 @@ update_core_command() {
 }
 
 usage() {
-DEFAULT_SERVICE_PORT="62050"
-DEFAULT_XRAY_API_PORT="1545"
+# Fetch IP address from ipinfo.io API
+NODE_IP=$(curl -s https://ipinfo.io/ip)
     colorized_echo red "Usage: $APP_NAME [command]"
     echo
     echo "Commands:"
@@ -770,13 +767,13 @@ DEFAULT_XRAY_API_PORT="1545"
     echo "  restart         Restart services"
     echo "  status          Show status"
     echo "  logs            Show logs"
-    echo "  install         Install Marzban-node"
+    echo "  install         Install/reinstall Marzban-node"
     echo "  update          Update latest version"
     echo "  uninstall       Uninstall Marzban-node"
     echo "  install-script  Install Marzban-node script"
     echo "  core-update     Update/Change Xray core"
     echo
-    colorized_echo green "  Your cert file here: $CERT_FILE"
+    colorized_echo magenta "  Your cert file here: $CERT_FILE"
     colorized_echo magenta "  Your IP is: $NODE_IP"
     colorized_echo magenta "  Current port configuration:"
     DEFAULT_SERVICE_PORT="62050"
