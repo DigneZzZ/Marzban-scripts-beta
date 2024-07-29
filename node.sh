@@ -776,18 +776,17 @@ DEFAULT_XRAY_API_PORT="1545"
     echo "  install-script  Install Marzban-node script"
     echo "  core-update     Update/Change Xray core"
     echo
-    echo "  Your cert file here: $CERT_FILE"
-    echo "  Your IP is: $NODE_IP"
-    echo
-    echo "  Current port configuration:"
+    colorized_echo green "  Your cert file here: $CERT_FILE"
+    colorized_echo magenta "  Your IP is: $NODE_IP"
+    colorized_echo magenta "  Current port configuration:"
     DEFAULT_SERVICE_PORT="62050"
     DEFAULT_XRAY_API_PORT="62051"
     SERVICE_PORT=$(awk -F': ' '/SERVICE_PORT:/ {gsub(/"/, "", $2); print $2}' "$COMPOSE_FILE")
     XRAY_API_PORT=$(awk -F': ' '/XRAY_API_PORT:/ {gsub(/"/, "", $2); print $2}' "$COMPOSE_FILE")
     SERVICE_PORT=${SERVICE_PORT:-$DEFAULT_SERVICE_PORT}
     XRAY_API_PORT=${XRAY_API_PORT:-$DEFAULT_XRAY_API_PORT}
-    colorized_echo magenta "  SERVICE_PORT: $SERVICE_PORT"
-    colorized_echo magenta "  XRAY_API_PORT: $XRAY_API_PORT"
+    colorized_echo magenta "  SERVICE PORT: $SERVICE_PORT"
+    colorized_echo magenta "  API PORT: $XRAY_API_PORT"
 
     echo
 }
