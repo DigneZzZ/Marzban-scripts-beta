@@ -809,6 +809,7 @@ NODE_IP=$(curl -s https://ipinfo.io/ip)
     echo "  uninstall       Uninstall Marzban-node"
     echo "  install-script  Install Marzban-node script"
     echo "  core-update     Update/Change Xray core"
+    echo "  edit            Edit docker-compose.yml via nano / vi editor"
     echo
     colorized_echo magenta "  Your cert file here: $CERT_FILE"
     colorized_echo magenta "  Your IP is: $NODE_IP"
