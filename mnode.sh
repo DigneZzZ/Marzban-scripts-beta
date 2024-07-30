@@ -38,7 +38,7 @@ if [[ "$COMMAND" == "install" || "$COMMAND" == "install-script" ]] && [ -z "$NOD
     NODE_NAME="marzban-node"
 fi
 
-APP_NAME="marzban-node"
+APP_NAME=$NODE_NAME
 INSTALL_DIR="/opt"
 APP_DIR="$INSTALL_DIR/$APP_NAME"
 DATA_DIR="/var/lib/$APP_NAME"
