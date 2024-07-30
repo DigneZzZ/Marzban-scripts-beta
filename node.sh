@@ -36,7 +36,7 @@ if [ -z "$APP_NAME" ]; then
     APP_NAME="${SCRIPT_NAME%.*}"
 fi
 
-INSTALL_DIR="/opt"
+INSTALL_DIR="/root"
 APP_DIR="$INSTALL_DIR/$APP_NAME"
 DATA_DIR="/var/lib/$APP_NAME"
 DATA_MAIN_DIR="/var/lib/$APP_NAME"
