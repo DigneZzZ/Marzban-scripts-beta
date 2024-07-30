@@ -35,11 +35,11 @@ if [ -z "$APP_NAME" ]; then
     SCRIPT_NAME=$(basename "$0")
     APP_NAME="${SCRIPT_NAME%.*}"
 fi
-APP_NAME_MAIN="marzban"
+
 INSTALL_DIR="/root"
 APP_DIR="$INSTALL_DIR/$APP_NAME"
 DATA_DIR="/var/lib/$APP_NAME"
-DATA_MAIN_DIR="/var/lib/$APP_NAME_MAIN"
+DATA_MAIN_DIR="/var/lib/$APP_NAME"
 COMPOSE_FILE="$APP_DIR/docker-compose.yml"
 LAST_XRAY_CORES=5
 CERT_FILE="$DATA_DIR/cert.pem"
@@ -745,9 +745,9 @@ update_core_command() {
     fi
 
     # Check if the /var/lib/marzban:/var/lib/marzban string already exists in the docker-compose.yml file
-    if ! grep -q "^\s*- /var/lib/marzban:/var/lib/marzban\s*$" "$COMPOSE_FILE"; then
+    if ! grep -q "^\s*- $DATA_MAIN_DIR:/var/lib/marzban\s*$" "$COMPOSE_FILE"; then
         # If the string does not exist, add it
-        sed -i '/volumes:/!b;n;/^- \/var\/lib\/marzban:\/var\/lib\/marzban/!a\      - \/var\/lib\/marzban:\/var\/lib\/marzban' "$COMPOSE_FILE"
+        sed -i '/volumes:/!b;n;/^- $DATA_MAIN_DIR:\/var\/lib\/marzban/!a\      - $DATA_MAIN_DIR:\/var\/lib\/marzban' "$COMPOSE_FILE"
     fi
 
     # Restart Marzban
