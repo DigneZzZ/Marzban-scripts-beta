@@ -6,7 +6,7 @@ while [[ $# -gt 0 ]]; do
     key="$1"
 
     case $key in
-        install|update|uninstall|up|down|restart|status|logs|core-update|install-script)
+        install|update|uninstall|up|down|restart|status|logs|core-update|install-script|edit)
         COMMAND="$1"
         shift # past argument
         ;;
@@ -591,6 +591,43 @@ logs_command() {
         follow_marzban_node_logs
     fi
 }
+install_nano() {
+    colorized_echo blue "Installing nano"
+    if [[ "$OS" == "Ubuntu"* ]] || [[ "$OS" == "Debian"* ]]; then
+        $PKG_MANAGER -y install nano
+    elif [[ "$OS" == "CentOS"* ]] || [[ "$OS" == "AlmaLinux"* ]]; then
+        $PKG_MANAGER install -y nano
+    elif [ "$OS" == "Fedora"* ]; then
+        $PKG_MANAGER install -y nano
+    elif [ "$OS" == "Arch" ]; then
+        $PKG_MANAGER -S --noconfirm nano
+    else
+        colorized_echo red "Unsupported operating system"
+        exit 1
+    fi
+    colorized_echo green "nano installed successfully"
+}
+
+check_editor() {
+    if command -v nano >/dev/null 2>&1; then
+        EDITOR="nano"
+    elif command -v vi >/dev/null 2>&1; then
+        EDITOR="vi"
+    else
+        install_nano
+        EDITOR="nano"
+    fi
+}
+edit_command() {
+    detect_os
+    check_editor
+    if [ -f "$COMPOSE_FILE" ]; then
+        $EDITOR "$COMPOSE_FILE"
+    else
+        colorized_echo red "Compose file not found at $COMPOSE_FILE"
+        exit 1
+    fi
+}
 
 update_command() {
     check_running_as_root
@@ -818,6 +855,9 @@ case "$COMMAND" in
     ;;
     install-script)
     install_marzban_node_script
+    ;;
+    edit)
+    edit_command
     ;;
     *)
     usage
