@@ -171,10 +171,11 @@ install_marzban_node_script() {
 }
 
 # Get a list of occupied ports
+# Get a list of occupied ports
 get_occupied_ports() {
     if command -v ss &> /dev/null; then
         OCCUPIED_PORTS=$(ss -tuln | awk '{print $5}' | grep -Eo '[0-9]+$' | sort | uniq)
-        elif command -v netstat &> /dev/null; then
+    elif command -v netstat &> /dev/null; then
         OCCUPIED_PORTS=$(netstat -tuln | awk '{print $4}' | grep -Eo '[0-9]+$' | sort | uniq)
     else
         colorized_echo yellow "Neither ss nor netstat found. Attempting to install net-tools."
@@ -192,12 +193,11 @@ get_occupied_ports() {
 # Function to check if a port is occupied
 is_port_occupied() {
     if echo "$OCCUPIED_PORTS" | grep -q -w "$1"; then
-        return 1
-    else
         return 0
+    else
+        return 1
     fi
 }
-
 
 install_marzban_node() {
     # Fetch releases
@@ -218,14 +218,12 @@ install_marzban_node() {
     # Prompt the user to input the certificate
     echo -e "Please paste the content of the Client Certificate, press ENTER on a new line when finished: "
     
-    
     while IFS= read -r line; do
         if [[ -z $line ]]; then
             break
         fi
         echo "$line" >> "$CERT_FILE"
     done
-    
     
     print_info "Certificate saved to $CERT_FILE"
     
