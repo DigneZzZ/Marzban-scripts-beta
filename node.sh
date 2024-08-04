@@ -171,7 +171,6 @@ install_marzban_node_script() {
 }
 
 # Get a list of occupied ports
-# Get a list of occupied ports
 get_occupied_ports() {
     if command -v ss &> /dev/null; then
         OCCUPIED_PORTS=$(ss -tuln | awk '{print $5}' | grep -Eo '[0-9]+$' | sort | uniq)
@@ -264,6 +263,8 @@ install_marzban_node() {
         if [[ "$XRAY_API_PORT" -ge 1024 && "$XRAY_API_PORT" -le 65535 ]]; then
             if is_port_occupied "$XRAY_API_PORT"; then
                 colorized_echo red "Port $XRAY_API_PORT is already in use. Please enter another port."
+            elif [[ "$XRAY_API_PORT" -eq "$SERVICE_PORT" ]]; then
+                colorized_echo red "Port $XRAY_API_PORT cannot be the same as SERVICE_PORT. Please enter another port."
             else
                 break
             fi
@@ -303,6 +304,7 @@ EOL
 EOL
     colorized_echo green "File saved in $APP_DIR/docker-compose.yml"
 }
+
 
 
 uninstall_marzban_node_script() {
