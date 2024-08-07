@@ -1,3 +1,5 @@
+
+
 #!/usr/bin/env bash
 set -e
 
@@ -12,7 +14,7 @@ while [[ $# -gt 0 ]]; do
         ;;
         --name)
             if [[ "$COMMAND" == "install" || "$COMMAND" == "install-script" ]]; then
-                NODE_NAME="$2"
+                APP_NAME="$2"
                 shift # past argument
             else
                 echo "Error: --name parameter is only allowed with 'install' or 'install-script' commands."
@@ -34,11 +36,15 @@ if [ -z "$NODE_IP" ]; then
     NODE_IP=$(curl -s -6 ifconfig.io)
 fi
 
-if [[ "$COMMAND" == "install" || "$COMMAND" == "install-script" ]] && [ -z "$NODE_NAME" ]; then
-    NODE_NAME="marzban-node"
+if [[ "$COMMAND" == "install" || "$COMMAND" == "install-script" ]] && [ -z "$APP_NAME" ]; then
+    APP_NAME="marzban-node"
+fi
+# Set script name if APP_NAME is not set
+if [ -z "$APP_NAME" ]; then
+    SCRIPT_NAME=$(basename "$0")
+    APP_NAME="${SCRIPT_NAME%.*}"
 fi
 
-APP_NAME=$NODE_NAME
 INSTALL_DIR="/opt"
 APP_DIR="$INSTALL_DIR/$APP_NAME"
 DATA_DIR="/var/lib/$APP_NAME"
@@ -46,6 +52,8 @@ DATA_MAIN_DIR="/var/lib/$APP_NAME"
 COMPOSE_FILE="$APP_DIR/docker-compose.yml"
 LAST_XRAY_CORES=5
 CERT_FILE="$DATA_DIR/cert.pem"
+#FETCH_REPO="Gozargah/Marzban-scripts"
+#SCRIPT_URL="https://github.com/$FETCH_REPO/raw/master/marzban-node.sh"
 FETCH_REPO="DigneZzZ/Marzban-scripts-beta"
 SCRIPT_URL="https://github.com/$FETCH_REPO/raw/main/node.sh"
 
@@ -244,14 +252,14 @@ install_marzban_node() {
         if [[ -z "$SERVICE_PORT" ]]; then
             SERVICE_PORT=62050
         fi
-        if [[ "$SERVICE_PORT" -ge 1024 && "$SERVICE_PORT" -le 65535 ]]; then
+        if [[ "$SERVICE_PORT" -ge 1 && "$SERVICE_PORT" -le 65535 ]]; then
             if is_port_occupied "$SERVICE_PORT"; then
                 colorized_echo red "Port $SERVICE_PORT is already in use. Please enter another port."
             else
                 break
             fi
         else
-            colorized_echo red "Invalid port. Please enter a port between 1024 and 65535."
+            colorized_echo red "Invalid port. Please enter a port between 1 and 65535."
         fi
     done
     
@@ -260,7 +268,7 @@ install_marzban_node() {
         if [[ -z "$XRAY_API_PORT" ]]; then
             XRAY_API_PORT=62051
         fi
-        if [[ "$XRAY_API_PORT" -ge 1024 && "$XRAY_API_PORT" -le 65535 ]]; then
+        if [[ "$XRAY_API_PORT" -ge 1 && "$XRAY_API_PORT" -le 65535 ]]; then
             if is_port_occupied "$XRAY_API_PORT"; then
                 colorized_echo red "Port $XRAY_API_PORT is already in use. Please enter another port."
             elif [[ "$XRAY_API_PORT" -eq "$SERVICE_PORT" ]]; then
@@ -269,7 +277,7 @@ install_marzban_node() {
                 break
             fi
         else
-            colorized_echo red "Invalid port. Please enter a port between 1024 and 65535."
+            colorized_echo red "Invalid port. Please enter a port between 1 and 65535."
         fi
     done
     
@@ -279,7 +287,7 @@ install_marzban_node() {
     cat > "$COMPOSE_FILE" <<EOL
 services:
   marzban-node:
-    container_name: $NODE_NAME
+    container_name: $APP_NAME
     image: gozargah/marzban-node:latest
     restart: always
     network_mode: host
@@ -304,7 +312,6 @@ EOL
 EOL
     colorized_echo green "File saved in $APP_DIR/docker-compose.yml"
 }
-
 
 
 uninstall_marzban_node_script() {
