@@ -621,9 +621,7 @@ install_command() {
         exit 1
     fi
     up_marzban
-    if [ "$no_logs" = false ]; then
-        follow_marzban_logs
-    fi
+    follow_marzban_logs
 }
 
 down_marzban() {
