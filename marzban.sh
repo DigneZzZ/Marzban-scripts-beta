@@ -704,6 +704,135 @@ restart_command() {
         follow_marzban_logs
     fi
 }
+logs_command() {
+    help() {
+        colorized_echo red "Usage: marzban logs [options]"
+        echo ""
+        echo "OPTIONS:"
+        echo "  -h, --help        display this help message"
+        echo "  -n, --no-follow   do not show follow logs"
+    }
+    
+    local no_follow=false
+    while [[ "$#" -gt 0 ]]; do
+        case "$1" in
+            -n|--no-follow)
+                no_follow=true
+            ;;
+            -h|--help)
+                help
+                exit 0
+            ;;
+            *)
+                echo "Error: Invalid option: $1" >&2
+                help
+                exit 0
+            ;;
+        esac
+        shift
+    done
+    
+    # Check if marzban is installed
+    if ! is_marzban_installed; then
+        colorized_echo red "Marzban's not installed!"
+        exit 1
+    fi
+    
+    detect_compose
+    
+    if ! is_marzban_up; then
+        colorized_echo red "Marzban is not up."
+        exit 1
+    fi
+    
+    if [ "$no_follow" = true ]; then
+        show_marzban_logs
+    else
+        follow_marzban_logs
+    fi
+}
+
+down_command() {
+    
+    # Check if marzban is installed
+    if ! is_marzban_installed; then
+        colorized_echo red "Marzban's not installed!"
+        exit 1
+    fi
+    
+    detect_compose
+    
+    if ! is_marzban_up; then
+        colorized_echo red "Marzban's already down"
+        exit 1
+    fi
+    
+    down_marzban
+}
+
+cli_command() {
+    # Check if marzban is installed
+    if ! is_marzban_installed; then
+        colorized_echo red "Marzban's not installed!"
+        exit 1
+    fi
+    
+    detect_compose
+    
+    if ! is_marzban_up; then
+        colorized_echo red "Marzban is not up."
+        exit 1
+    fi
+    
+    marzban_cli "$@"
+}
+
+up_command() {
+    help() {
+        colorized_echo red "Usage: marzban up [options]"
+        echo ""
+        echo "OPTIONS:"
+        echo "  -h, --help        display this help message"
+        echo "  -n, --no-logs     do not follow logs after starting"
+    }
+    
+    local no_logs=false
+    while [[ "$#" -gt 0 ]]; do
+        case "$1" in
+            -n|--no-logs)
+                no_logs=true
+            ;;
+            -h|--help)
+                help
+                exit 0
+            ;;
+            *)
+                echo "Error: Invalid option: $1" >&2
+                help
+                exit 0
+            ;;
+        esac
+        shift
+    done
+    
+    # Check if marzban is installed
+    if ! is_marzban_installed; then
+        colorized_echo red "Marzban's not installed!"
+        exit 1
+    fi
+    
+    detect_compose
+    
+    if is_marzban_up; then
+        colorized_echo red "Marzban's already up"
+        exit 1
+    fi
+    
+    up_marzban
+    if [ "$no_logs" = false ]; then
+        follow_marzban_logs
+    fi
+}
 
 update_command() {
     check_running_as_root
