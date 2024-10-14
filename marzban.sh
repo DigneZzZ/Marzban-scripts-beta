@@ -365,7 +365,9 @@ services:
       timeout: 5s
       retries: 3
 EOF
-        echo "Using MariaDB as database"
+        echo "----------------------------"
+        colorized_echo red "Using MariaDB as database"
+        echo "----------------------------"
         colorized_echo green "File generated at $APP_DIR/docker-compose.yml"
 
         # Modify .env file
@@ -428,7 +430,9 @@ services:
       timeout: 5s
       retries: 55
 EOF
-        echo "Using MySQL as database"
+        echo "----------------------------"
+        colorized_echo red "Using MySQL as database"
+        echo "----------------------------"
         colorized_echo green "File generated at $APP_DIR/docker-compose.yml"
 
         # Modify .env file
@@ -447,6 +451,9 @@ EOF
         colorized_echo green "File saved in $APP_DIR/.env"
 
     else
+        echo "----------------------------"
+        colorized_echo red "Using SQLite as database"
+        echo "----------------------------"
         colorized_echo blue "Fetching compose file"
         curl -sL "$FILES_URL_PREFIX/docker-compose.yml" -o "$docker_file_path"
 
@@ -536,15 +543,27 @@ install_command() {
                 database_type="$2"
                 shift 2
             ;;
-            *)
-                if [[ "$marzban_version_set" == "false" && ("$1" == "latest" || "$1" == "dev" || "$1" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$) ]]; then
-                    marzban_version="$1"
-                    marzban_version_set="true"
-                    shift
-                else
-                    echo "Unknown option: $1"
+            --dev)
+                if [[ "$marzban_version_set" == "true" ]]; then
+                    colorized_echo red "Error: Cannot use --dev and --version options simultaneously."
                     exit 1
                 fi
+                marzban_version="dev"
+                marzban_version_set="true"
+                shift
+            ;;
+            --version)
+                if [[ "$marzban_version_set" == "true" ]]; then
+                    colorized_echo red "Error: Cannot use --dev and --version options simultaneously."
+                    exit 1
+                fi
+                marzban_version="$2"
+                marzban_version_set="true"
+                shift 2
+            ;;
+            *)
+                echo "Unknown option: $1"
+                exit 1
             ;;
         esac
     done
