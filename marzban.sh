@@ -278,7 +278,7 @@ get_xray_core() {
     xray_download_url="https://github.com/XTLS/Xray-core/releases/download/${selected_version}/${xray_filename}"
 
     echo -e "\033[1;33mDownloading Xray-core version ${selected_version}...\033[0m"
-    wget -O "${xray_filename}" "${xray_download_url}"
+    wget -q -O "${xray_filename}" "${xray_download_url}"
 
     echo -e "\033[1;33mExtracting Xray-core...\033[0m"
     unzip -o "${xray_filename}" >/dev/null 2>&1
@@ -304,7 +304,7 @@ update_core_command() {
     
     # Restart Marzban
     colorized_echo red "Restarting Marzban..."
-    marzban restart -n
+    marzban restart -n >/dev/null 2>&1
     colorized_echo blue "Installation of Xray-core version $selected_version completed."
 }
 
