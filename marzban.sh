@@ -568,9 +568,177 @@ install_command() {
     follow_marzban_logs
 }
 
-# [Other functions remain the same as before]
+down_marzban() {
+    $COMPOSE -f $COMPOSE_FILE -p "$APP_NAME" down
+}
 
-# At the end of the script, include the case statement for command handling
+is_marzban_up() {
+    if [ -z "$($COMPOSE -f $COMPOSE_FILE ps -q -a)" ]; then
+        return 1
+    else
+        return 0
+    fi
+}
+
+uninstall_command() {
+    check_running_as_root
+    # Check if marzban is installed
+    if ! is_marzban_installed; then
+        colorized_echo red "Marzban's not installed!"
+        exit 1
+    fi
+    
+    read -p "Do you really want to uninstall Marzban? (y/n) "
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        colorized_echo red "Aborted"
+        exit 1
+    fi
+    
+    detect_compose
+    if is_marzban_up; then
+        down_marzban
+    fi
+    uninstall_marzban_script
+    uninstall_marzban
+    uninstall_marzban_docker_images
+    
+    read -p "Do you want to remove Marzban's data files too ($DATA_DIR)? (y/n) "
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        colorized_echo green "Marzban uninstalled successfully"
+    else
+        uninstall_marzban_data_files
+        colorized_echo green "Marzban uninstalled successfully"
+    fi
+}
+
+uninstall_marzban_script() {
+    if [ -f "/usr/local/bin/marzban" ]; then
+        colorized_echo yellow "Removing marzban script"
+        rm "/usr/local/bin/marzban"
+    fi
+}
+
+uninstall_marzban() {
+    if [ -d "$APP_DIR" ]; then
+        colorized_echo yellow "Removing directory: $APP_DIR"
+        rm -r "$APP_DIR"
+    fi
+}
+
+uninstall_marzban_docker_images() {
+    images=$(docker images | grep marzban | awk '{print $3}')
+    
+    if [ -n "$images" ]; then
+        colorized_echo yellow "Removing Docker images of Marzban"
+        for image in $images; do
+            if docker rmi "$image" >/dev/null 2>&1; then
+                colorized_echo yellow "Image $image removed"
+            fi
+        done
+    fi
+}
+
+uninstall_marzban_data_files() {
+    if [ -d "$DATA_DIR" ]; then
+        colorized_echo yellow "Removing directory: $DATA_DIR"
+        rm -r "$DATA_DIR"
+    fi
+}
+
+restart_command() {
+    help() {
+        colorized_echo red "Usage: marzban restart [options]"
+        echo
+        echo "OPTIONS:"
+        echo "  -h, --help        display this help message"
+        echo "  -n, --no-logs     do not follow logs after starting"
+    }
+    
+    local no_logs=false
+    while [[ "$#" -gt 0 ]]; do
+        case "$1" in
+            -n|--no-logs)
+                no_logs=true
+            ;;
+            -h|--help)
+                help
+                exit 0
+            ;;
+            *)
+                echo "Error: Invalid option: $1" >&2
+                help
+                exit 0
+            ;;
+        esac
+        shift
+    done
+    
+    # Check if marzban is installed
+    if ! is_marzban_installed; then
+        colorized_echo red "Marzban's not installed!"
+        exit 1
+    fi
+    
+    detect_compose
+    
+    down_marzban
+    up_marzban
+    if [ "$no_logs" = false ]; then
+        follow_marzban_logs
+    fi
+}
+
+update_command() {
+    check_running_as_root
+    # Check if marzban is installed
+    if ! is_marzban_installed; then
+        colorized_echo red "Marzban's not installed!"
+        exit 1
+    fi
+    
+    detect_compose
+    
+    update_marzban_script
+    colorized_echo blue "Pulling latest version"
+    update_marzban
+    
+    colorized_echo blue "Restarting Marzban's services"
+    down_marzban
+    up_marzban
+    
+    colorized_echo blue "Marzban updated successfully"
+}
+
+update_marzban_script() {
+    FETCH_REPO="Gozargah/Marzban-scripts"
+    SCRIPT_URL="https://github.com/$FETCH_REPO/raw/master/marzban.sh"
+    colorized_echo blue "Updating marzban script"
+    curl -sSL $SCRIPT_URL | install -m 755 /dev/stdin /usr/local/bin/marzban
+    colorized_echo green "marzban script updated successfully"
+}
+
+update_marzban() {
+    $COMPOSE -f $COMPOSE_FILE -p "$APP_NAME" pull
+}
+
+usage() {
+    colorized_echo red "Usage: marzban [command]"
+    echo
+    echo "Commands:"
+    echo "  up              Start services"
+    echo "  down            Stop services"
+    echo "  restart         Restart services"
+    echo "  status          Show status"
+    echo "  logs            Show logs"
+    echo "  cli             Marzban CLI"
+    echo "  install         Install Marzban"
+    echo "  update          Update latest version"
+    echo "  uninstall       Uninstall Marzban"
+    echo "  install-script  Install Marzban script"
+    echo "  core-update     Update/Change Xray core"
+    echo
+}
+
 
 case "$1" in
     up)
