@@ -483,6 +483,43 @@ follow_marzban_logs() {
     $COMPOSE -f $COMPOSE_FILE -p "$APP_NAME" logs -f
 }
 
+status_command() {
+    
+    # Check if marzban is installed
+    if ! is_marzban_installed; then
+        echo -n "Status: "
+        colorized_echo red "Not Installed"
+        exit 1
+    fi
+    
+    detect_compose
+    
+    if ! is_marzban_up; then
+        echo -n "Status: "
+        colorized_echo blue "Down"
+        exit 1
+    fi
+    
+    echo -n "Status: "
+    colorized_echo green "Up"
+    
+    json=$($COMPOSE -f $COMPOSE_FILE ps -a --format=json)
+    services=$(echo "$json" | jq -r 'if type == "array" then .[] else . end | .Service')
+    states=$(echo "$json" | jq -r 'if type == "array" then .[] else . end | .State')
+    # Print out the service names and statuses
+    for i in $(seq 0 $(expr $(echo $services | wc -w) - 1)); do
+        service=$(echo $services | cut -d' ' -f $(expr $i + 1))
+        state=$(echo $states | cut -d' ' -f $(expr $i + 1))
+        echo -n "- $service: "
+        if [ "$state" == "running" ]; then
+            colorized_echo green $state
+        else
+            colorized_echo red $state
+        fi
+    done
+}
+
+
 install_command() {
     check_running_as_root
 
