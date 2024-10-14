@@ -574,6 +574,21 @@ down_marzban() {
     $COMPOSE -f $COMPOSE_FILE -p "$APP_NAME" down
 }
 
+
+
+show_marzban_logs() {
+    $COMPOSE -f $COMPOSE_FILE -p "$APP_NAME" logs
+}
+
+follow_marzban_logs() {
+    $COMPOSE -f $COMPOSE_FILE -p "$APP_NAME" logs -f
+}
+
+marzban_cli() {
+    $COMPOSE -f $COMPOSE_FILE -p "$APP_NAME" exec -e CLI_PROG_NAME="marzban cli" marzban marzban-cli "$@"
+}
+
+
 is_marzban_up() {
     if [ -z "$($COMPOSE -f $COMPOSE_FILE ps -q -a)" ]; then
         return 1
