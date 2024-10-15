@@ -1,29 +1,42 @@
 # Marzban-scripts-beta
 
 ## Installing Marzban
-### Install Marzban on your server using this command
+- **Install Marzban with SQLite**:
+
 ```bash
-sudo bash -c "$(curl -sL https://github.com/DigneZzZ/Marzban-scripts-beta/raw/main/marzban.sh)" @ install
-```
-### Or you can only install this script (marzban command) on your server by using this command
-```bash
-sudo bash -c "$(curl -sL https://github.com/DigneZzZ/Marzban-scripts-beta/raw/main/marzban.sh)" @ install-script
+sudo bash -c "$(curl -sL https://github.com/Gozargah/Marzban-scripts/raw/master/marzban.sh)" @ install
 ```
 
-### this is an example for installing a specific version
-```
-sudo bash -c "$(curl -sL https://github.com/DigneZzZ/Marzban-scripts-beta/raw/main/marzban.sh)" @ install v0.5.2
-```
+- **Install Marzban with MySQL**:
 
-### this is for MySQL
-```
-sudo bash -c "$(curl -sL https://github.com/DigneZzZ/Marzban-scripts-beta/raw/main/marzban.sh)" @ install --database mysql
-```
+  ```bash
+  sudo bash -c "$(curl -sL https://github.com/Gozargah/Marzban-scripts/raw/master/marzban.sh)" @ install --database mysql
+  ```
 
-### this is for MariaDB
-```
-sudo bash -c "$(curl -sL https://github.com/DigneZzZ/Marzban-scripts-beta/raw/main/marzban.sh)" @ install --database mariadb
-```
+- **Install Marzban with MariaDB**:
+
+  ```bash
+  sudo bash -c "$(curl -sL https://github.com/Gozargah/Marzban-scripts/raw/master/marzban.sh)" @ install --database mariadb
+  ```
+  
+  - **Install Marzban with MariaDB and Dev branch**:
+
+  ```bash
+  sudo bash -c "$(curl -sL https://github.com/Gozargah/Marzban-scripts/raw/master/marzban.sh)" @ install --database mariadb --dev
+  ```
+
+  - **Install Marzban with MariaDB and Manual version **:
+
+  ```bash
+  sudo bash -c "$(curl -sL https://github.com/Gozargah/Marzban-scripts/raw/master/marzban.sh)" @ install --database mariadb --version v0.5.2
+  ```
+
+- **Update or Change Xray-core Version**:
+
+  ```bash
+  sudo marzban core-update
+  ```
+
 
 ## Installing Marzban-node
 Install Marzban-node on your server using this command
