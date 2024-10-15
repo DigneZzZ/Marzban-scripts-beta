@@ -4,31 +4,31 @@
 - **Install Marzban with SQLite**:
 
 ```bash
-sudo bash -c "$(curl -sL https://github.com/Gozargah/Marzban-scripts/raw/master/marzban.sh)" @ install
+sudo bash -c "$(curl -sL https://github.com/DigneZzZ/Marzban-scripts-beta/raw/main/marzban.sh)" @ install
 ```
 
 - **Install Marzban with MySQL**:
 
   ```bash
-  sudo bash -c "$(curl -sL https://github.com/Gozargah/Marzban-scripts/raw/master/marzban.sh)" @ install --database mysql
+  sudo bash -c "$(curl -sL https://github.com/DigneZzZ/Marzban-scripts-beta/raw/main/marzban.sh)" @ install --database mysql
   ```
 
 - **Install Marzban with MariaDB**:
 
   ```bash
-  sudo bash -c "$(curl -sL https://github.com/Gozargah/Marzban-scripts/raw/master/marzban.sh)" @ install --database mariadb
+  sudo bash -c "$(curl -sL https://github.com/DigneZzZ/Marzban-scripts-beta/raw/main/marzban.sh)" @ install --database mariadb
   ```
   
   - **Install Marzban with MariaDB and Dev branch**:
 
   ```bash
-  sudo bash -c "$(curl -sL https://github.com/Gozargah/Marzban-scripts/raw/master/marzban.sh)" @ install --database mariadb --dev
+  sudo bash -c "$(curl -sL https://github.com/DigneZzZ/Marzban-scripts-beta/raw/main/marzban.sh)" @ install --database mariadb --dev
   ```
 
   - **Install Marzban with MariaDB and Manual version **:
 
   ```bash
-  sudo bash -c "$(curl -sL https://github.com/Gozargah/Marzban-scripts/raw/master/marzban.sh)" @ install --database mariadb --version v0.5.2
+  sudo bash -c "$(curl -sL https://github.com/DigneZzZ/Marzban-scripts-beta/raw/main/marzban.sh)" @ install --database mariadb --version v0.5.2
   ```
 
 - **Update or Change Xray-core Version**:
