@@ -34,7 +34,7 @@ sudo bash -c "$(curl -sL https://github.com/DigneZzZ/Marzban-scripts-beta/raw/ma
 - **Update or Change Xray-core Version**:
 
   ```bash
-  sudo marzban core-update
+  marzban core-update
   ```
 
 ![image](https://github.com/user-attachments/assets/6c0c23e4-a6de-4acb-bcab-4035cd6fdc08)
