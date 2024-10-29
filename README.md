@@ -57,3 +57,6 @@ Or you can only install this script (marzban-node command) on your server by usi
 sudo bash -c "$(curl -sL https://github.com/DigneZzZ/Marzban-scripts-beta/raw/main/node.sh)" @ install-script
 ```
 Use help to view all commands: `marzban-node help`
+
+![image](https://github.com/user-attachments/assets/d585419f-4881-4327-a978-a181de87d9cd)
+
