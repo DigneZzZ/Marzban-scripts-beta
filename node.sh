@@ -50,8 +50,8 @@ DATA_MAIN_DIR="/var/lib/$APP_NAME"
 COMPOSE_FILE="$APP_DIR/docker-compose.yml"
 LAST_XRAY_CORES=5
 CERT_FILE="$DATA_DIR/cert.pem"
-FETCH_REPO="Gozargah/Marzban-scripts"
-SCRIPT_URL="https://github.com/$FETCH_REPO/raw/master/marzban-node.sh"
+FETCH_REPO="DigneZzZ/Marzban-scripts-beta"
+SCRIPT_URL="https://github.com/$FETCH_REPO/raw/main/node.sh"
 
 colorized_echo() {
     local color=$1
