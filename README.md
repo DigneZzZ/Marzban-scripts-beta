@@ -1,4 +1,4 @@
-# Marzban-scripts-beta
+# Marzban-scripts-beta - PRE-RELEASE before official PR 
 
 ## Installing Marzban
 - **Install Marzban with SQLite**:
