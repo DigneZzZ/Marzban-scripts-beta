@@ -342,11 +342,11 @@ services:
     network_mode: host
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: password
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_ROOT_HOST: '%'
-      MYSQL_DATABASE: marzban
-      MYSQL_USER: marzban
-      MYSQL_PASSWORD: password
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     command:
       - --bind-address=127.0.0.1
       - --character_set_server=utf8mb4
@@ -375,14 +375,38 @@ EOF
         curl -sL "$FILES_URL_PREFIX/.env.example" -o "$APP_DIR/.env"
 
         # Comment out the SQLite line
-        sed -i 's~^\(SQLALCHEMY_DATABASE_URL = "sqlite:////var/lib/marzban/db.sqlite3"\)~#\1~' "$APP_DIR/.env"
+        yq -i '.SQLALCHEMY_DATABASE_URL |= "# " + .' "$APP_DIR/.env"
 
-        # Add the MariaDB connection string
-        echo -e '\nSQLALCHEMY_DATABASE_URL = "mysql+pymysql://marzban:password@127.0.0.1:3306/marzban"' >> "$APP_DIR/.env"
 
-        sed -i 's/^# \(XRAY_JSON = .*\)$/\1/' "$APP_DIR/.env"
-        sed -i 's~\(XRAY_JSON = \).*~\1"/var/lib/marzban/xray_config.json"~' "$APP_DIR/.env"
+        # Add the MySQL connection string
+        #echo -e '\nSQLALCHEMY_DATABASE_URL = "mysql+pymysql://marzban:password@127.0.0.1:3306/marzban"' >> "$APP_DIR/.env"
 
+        yq -i '(.XRAY_JSON | select(. == "# XRAY_JSON = ")). |= sub("# ", "")' "$APP_DIR/.env"
+
+        yq -i '.XRAY_JSON = "/var/lib/marzban/xray_config.json"' "$APP_DIR/.env"
+
+
+        prompt_for_marzban_password
+    
+       
+        MYSQL_ROOT_PASSWORD=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 20)
+    
+    
+        
+        echo "" >> "$ENV_FILE"
+        echo "# Database configuration" >> "$ENV_FILE"
+        echo "MYSQL_ROOT_PASSWORD=$MYSQL_ROOT_PASSWORD" >> "$ENV_FILE"
+        echo "MYSQL_DATABASE=marzban" >> "$ENV_FILE"
+        echo "MYSQL_USER=marzban" >> "$ENV_FILE"
+        echo "MYSQL_PASSWORD=$MYSQL_PASSWORD" >> "$ENV_FILE"
+        
+        source "$ENV_FILE"
+        SQLALCHEMY_DATABASE_URL="mysql+pymysql://${MYSQL_USER}:${MYSQL_PASSWORD}@127.0.0.1:3306/${MYSQL_DATABASE}"
+    
+      
+        echo "" >> "$ENV_FILE"
+        echo "# SQLAlchemy Database URL" >> "$ENV_FILE"
+        echo "SQLALCHEMY_DATABASE_URL=\"$SQLALCHEMY_DATABASE_URL\"" >> "$ENV_FILE"
         colorized_echo green "File saved in $APP_DIR/.env"
 
     elif [ "$database_type" == "mysql" ]; then
@@ -407,11 +431,11 @@ services:
     network_mode: host
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: password
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_ROOT_HOST: '%'
-      MYSQL_DATABASE: marzban
-      MYSQL_USER: marzban
-      MYSQL_PASSWORD: password
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     command:
       - --mysqlx=OFF
       - --bind-address=127.0.0.1
@@ -424,11 +448,12 @@ services:
     volumes:
       - /var/lib/marzban/mysql:/var/lib/mysql
     healthcheck:
-      test: mysqladmin ping -h 127.0.0.1 -u marzban --password=password
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-u", "${MYSQL_USER}", "--password=${MYSQL_PASSWORD}"]
       start_period: 5s
       interval: 5s
       timeout: 5s
       retries: 55
+      
 EOF
         echo "----------------------------"
         colorized_echo red "Using MySQL as database"
@@ -440,13 +465,36 @@ EOF
         curl -sL "$FILES_URL_PREFIX/.env.example" -o "$APP_DIR/.env"
 
         # Comment out the SQLite line
-        sed -i 's~^\(SQLALCHEMY_DATABASE_URL = "sqlite:////var/lib/marzban/db.sqlite3"\)~#\1~' "$APP_DIR/.env"
+        yq -i '.SQLALCHEMY_DATABASE_URL |= "# " + .' "$APP_DIR/.env"
+
 
         # Add the MySQL connection string
-        echo -e '\nSQLALCHEMY_DATABASE_URL = "mysql+pymysql://marzban:password@127.0.0.1:3306/marzban"' >> "$APP_DIR/.env"
+        #echo -e '\nSQLALCHEMY_DATABASE_URL = "mysql+pymysql://marzban:password@127.0.0.1:3306/marzban"' >> "$APP_DIR/.env"
 
-        sed -i 's/^# \(XRAY_JSON = .*\)$/\1/' "$APP_DIR/.env"
-        sed -i 's~\(XRAY_JSON = \).*~\1"/var/lib/marzban/xray_config.json"~' "$APP_DIR/.env"
+        yq -i '(.XRAY_JSON | select(. == "# XRAY_JSON = ")). |= sub("# ", "")' "$APP_DIR/.env"
+
+        yq -i '.XRAY_JSON = "/var/lib/marzban/xray_config.json"' "$APP_DIR/.env"
+
+
+        prompt_for_marzban_password
+        MYSQL_ROOT_PASSWORD=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 20)
+    
+    
+        
+        echo "" >> "$ENV_FILE"
+        echo "# Database configuration" >> "$ENV_FILE"
+        echo "MYSQL_ROOT_PASSWORD=$MYSQL_ROOT_PASSWORD" >> "$ENV_FILE"
+        echo "MYSQL_DATABASE=marzban" >> "$ENV_FILE"
+        echo "MYSQL_USER=marzban" >> "$ENV_FILE"
+        echo "MYSQL_PASSWORD=$MYSQL_PASSWORD" >> "$ENV_FILE"
+
+        source "$ENV_FILE"
+        SQLALCHEMY_DATABASE_URL="mysql+pymysql://${MYSQL_USER}:${MYSQL_PASSWORD}@127.0.0.1:3306/${MYSQL_DATABASE}"
+    
+      
+        echo "" >> "$ENV_FILE"
+        echo "# SQLAlchemy Database URL" >> "$ENV_FILE"
+        echo "SQLALCHEMY_DATABASE_URL=\"$SQLALCHEMY_DATABASE_URL\"" >> "$ENV_FILE"
 
         colorized_echo green "File saved in $APP_DIR/.env"
 
@@ -459,19 +507,28 @@ EOF
 
         # Install requested version
         if [ "$marzban_version" == "latest" ]; then
-            sed -i "s|image: gozargah/marzban:.*|image: gozargah/marzban:latest|g" "$docker_file_path"
+            yq -i '.services.marzban.image = "gozargah/marzban:latest"' "$docker_file_path"
         else
-            sed -i "s|image: gozargah/marzban:.*|image: gozargah/marzban:${marzban_version}|g" "$docker_file_path"
+            yq -i ".services.marzban.image = \"gozargah/marzban:${marzban_version}\"" "$docker_file_path"
         fi
         echo "Installing $marzban_version version"
         colorized_echo green "File saved in $APP_DIR/docker-compose.yml"
 
+
         colorized_echo blue "Fetching .env file"
         curl -sL "$FILES_URL_PREFIX/.env.example" -o "$APP_DIR/.env"
-        sed -i 's/^# \(XRAY_JSON = .*\)$/\1/' "$APP_DIR/.env"
-        sed -i 's/^# \(SQLALCHEMY_DATABASE_URL = .*\)$/\1/' "$APP_DIR/.env"
-        sed -i 's~\(XRAY_JSON = \).*~\1"/var/lib/marzban/xray_config.json"~' "$APP_DIR/.env"
-        sed -i 's~\(SQLALCHEMY_DATABASE_URL = \).*~\1"sqlite:////var/lib/marzban/db.sqlite3"~' "$APP_DIR/.env"
+        yq -i '(.XRAY_JSON | select(. == "# XRAY_JSON = ")). |= sub("# ", "")' "$APP_DIR/.env"
+
+        yq -i '(.SQLALCHEMY_DATABASE_URL | select(. == "# SQLALCHEMY_DATABASE_URL = ")). |= sub("# ", "")' "$APP_DIR/.env"
+
+        yq -i '.XRAY_JSON = "/var/lib/marzban/xray_config.json"' "$APP_DIR/.env"
+
+        yq -i '.SQLALCHEMY_DATABASE_URL = "sqlite:////var/lib/marzban/db.sqlite3"' "$APP_DIR/.env"
+
+
+
+
+        
         colorized_echo green "File saved in $APP_DIR/.env"
     fi
     
@@ -526,6 +583,11 @@ status_command() {
     done
 }
 
+
+prompt_for_marzban_password() {
+    read -p "Введите пароль для пользователя marzban (или нажмите Enter для использования значения по умолчанию - password): " MYSQL_PASSWORD
+    MYSQL_PASSWORD=${MYSQL_PASSWORD:-password}
+}
 
 install_command() {
     check_running_as_root
@@ -586,6 +648,9 @@ install_command() {
     fi
     if ! command -v docker >/dev/null 2>&1; then
         install_docker
+    fi
+    if ! command -v yq >/dev/null 2>&1; then
+        install_package yq
     fi
     detect_compose
     install_marzban_script
