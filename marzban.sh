@@ -432,11 +432,11 @@ services:
     network_mode: host
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: \$\{MYSQL_ROOT_PASSWORD\}
+      MYSQL_ROOT_PASSWORD: \${MYSQL_ROOT_PASSWORD}
       MYSQL_ROOT_HOST: '%'
-      MYSQL_DATABASE: \$\{MYSQL_DATABASE\}
-      MYSQL_USER: \$\{MYSQL_USER\}
-      MYSQL_PASSWORD: \$\{MYSQL_PASSWORD\}
+      MYSQL_DATABASE: \${MYSQL_DATABASE}
+      MYSQL_USER: \${MYSQL_USER}
+      MYSQL_PASSWORD: \${MYSQL_PASSWORD}
     command:
       - --mysqlx=OFF                             # Disables MySQL X Plugin to save resources if X Protocol isn't used
       - --bind-address=127.0.0.1                  # Restricts access to localhost for increased security
@@ -599,10 +599,7 @@ prompt_for_marzban_password() {
         MYSQL_PASSWORD=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 20)
         colorized_echo green "A secure password has been generated automatically."
     fi
-
-    colorized_echo yellow "Using password: $MYSQL_PASSWORD"
-    colorized_echo yellow "Using user: marzban"
-    colorized_echo magenta "This password will be recorded in the .env file for future use."
+    colorized_echo green "This password will be recorded in the .env file for future use."
 
     # Пауза 3 секунды перед продолжением
     sleep 3
