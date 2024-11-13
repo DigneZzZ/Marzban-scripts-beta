@@ -393,11 +393,7 @@ EOF
 
 
         prompt_for_marzban_password
-    
-       
         MYSQL_ROOT_PASSWORD=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 20)
-    
-    
         
         echo "" >> "$ENV_FILE"
         echo "# Database configuration" >> "$ENV_FILE"
@@ -406,13 +402,12 @@ EOF
         echo "MYSQL_USER=marzban" >> "$ENV_FILE"
         echo "MYSQL_PASSWORD=$MYSQL_PASSWORD" >> "$ENV_FILE"
         
-        source "$ENV_FILE"
         SQLALCHEMY_DATABASE_URL="mysql+pymysql://${MYSQL_USER}:${MYSQL_PASSWORD}@127.0.0.1:3306/${MYSQL_DATABASE}"
-    
-      
+        
         echo "" >> "$ENV_FILE"
         echo "# SQLAlchemy Database URL" >> "$ENV_FILE"
         echo "SQLALCHEMY_DATABASE_URL=\"$SQLALCHEMY_DATABASE_URL\"" >> "$ENV_FILE"
+        
         colorized_echo green "File saved in $APP_DIR/.env"
 
     elif [ "$database_type" == "mysql" ]; then
@@ -490,8 +485,6 @@ EOF
 
         prompt_for_marzban_password
         MYSQL_ROOT_PASSWORD=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 20)
-    
-    
         
         echo "" >> "$ENV_FILE"
         echo "# Database configuration" >> "$ENV_FILE"
@@ -499,15 +492,13 @@ EOF
         echo "MYSQL_DATABASE=marzban" >> "$ENV_FILE"
         echo "MYSQL_USER=marzban" >> "$ENV_FILE"
         echo "MYSQL_PASSWORD=$MYSQL_PASSWORD" >> "$ENV_FILE"
-
-        source "$ENV_FILE"
+        
         SQLALCHEMY_DATABASE_URL="mysql+pymysql://${MYSQL_USER}:${MYSQL_PASSWORD}@127.0.0.1:3306/${MYSQL_DATABASE}"
-    
-      
+        
         echo "" >> "$ENV_FILE"
         echo "# SQLAlchemy Database URL" >> "$ENV_FILE"
         echo "SQLALCHEMY_DATABASE_URL=\"$SQLALCHEMY_DATABASE_URL\"" >> "$ENV_FILE"
-
+        
         colorized_echo green "File saved in $APP_DIR/.env"
 
     else
