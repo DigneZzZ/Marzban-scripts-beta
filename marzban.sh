@@ -597,8 +597,23 @@ status_command() {
 
 
 prompt_for_marzban_password() {
-    read -p "Введите пароль для пользователя marzban (или нажмите Enter для использования значения по умолчанию - password): " MYSQL_PASSWORD
-    MYSQL_PASSWORD=${MYSQL_PASSWORD:-password}
+    colorized_echo cyan "This password will be used to access the database and should be strong."
+    colorized_echo cyan "If you do not enter a custom password, a secure 20-character password will be generated automatically."
+
+    # Запрашиваем ввод пароля
+    read -p "Enter the password for the marzban user (or press Enter to generate a secure default password): " MYSQL_PASSWORD
+
+    # Генерация 20-значного пароля, если пользователь оставил поле пустым
+    if [ -z "$MYSQL_PASSWORD" ]; then
+        MYSQL_PASSWORD=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 20)
+        colorized_echo green "A secure password has been generated automatically."
+    fi
+
+    colorized_echo yellow "Using password: $MYSQL_PASSWORD"
+    colorized_echo magenta "This password will be recorded in the .env file for future use."
+
+    # Пауза 3 секунды перед продолжением
+    sleep 3
 }
 
 install_command() {
