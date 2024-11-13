@@ -342,11 +342,11 @@ services:
     network_mode: host
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_ROOT_PASSWORD: \$\{MYSQL_ROOT_PASSWORD\}
       MYSQL_ROOT_HOST: '%'
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: \$\{MYSQL_DATABASE\}
+      MYSQL_USER: \$\{MYSQL_USER\}
+      MYSQL_PASSWORD: \$\{MYSQL_PASSWORD\}
     command:
       - --bind-address=127.0.0.1                  # Restricts access to localhost for increased security
       - --character_set_server=utf8mb4            # Sets UTF-8 character set for full Unicode support
@@ -432,11 +432,11 @@ services:
     network_mode: host
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_ROOT_PASSWORD: \$\{MYSQL_ROOT_PASSWORD\}
       MYSQL_ROOT_HOST: '%'
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: \$\{MYSQL_DATABASE\}
+      MYSQL_USER: \$\{MYSQL_USER\}
+      MYSQL_PASSWORD: \$\{MYSQL_PASSWORD\}
     command:
       - --mysqlx=OFF                             # Disables MySQL X Plugin to save resources if X Protocol isn't used
       - --bind-address=127.0.0.1                  # Restricts access to localhost for increased security
