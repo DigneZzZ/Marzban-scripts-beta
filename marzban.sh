@@ -351,6 +351,17 @@ services:
       - --bind-address=127.0.0.1                  # Restricts access to localhost for increased security
       - --character_set_server=utf8mb4            # Sets UTF-8 character set for full Unicode support
       - --collation_server=utf8mb4_unicode_ci     # Defines collation for Unicode
+      - --host-cache-size=0                       # Disables host cache to prevent DNS issues
+      - --innodb-open-files=1024                  # Sets the limit for InnoDB open files
+      - --innodb-buffer-pool-size=256M            # Allocates buffer pool size for InnoDB
+      - --binlog_expire_logs_seconds=1209600      # Sets binary log expiration to 14 days (2 weeks)
+      - --innodb-log-file-size=64M                # Sets InnoDB log file size to balance log retention and performance
+      - --innodb-log-files-in-group=2             # Uses two log files to balance recovery and disk I/O
+      - --innodb-doublewrite=0                    # Disables doublewrite buffer (reduces disk I/O; may increase data loss risk)
+      - --general_log=0                           # Disables general query log to reduce disk usage
+      - --slow_query_log=1                        # Enables slow query log for identifying performance issues
+      - --slow_query_log_file=/var/lib/mysql/slow.log # Logs slow queries for troubleshooting
+      - --long_query_time=2                       # Defines slow query threshold as 2 seconds
     volumes:
       - /var/lib/marzban/mysql:/var/lib/mysql
     healthcheck:
@@ -446,7 +457,7 @@ services:
     volumes:
       - /var/lib/marzban/mysql:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-u", "${MYSQL_USER}", "--password=${MYSQL_PASSWORD}"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-u", "marzban", "--password=\${MYSQL_PASSWORD}"]
       start_period: 5s
       interval: 5s
       timeout: 5s
