@@ -402,7 +402,7 @@ EOF
         echo "MYSQL_USER=marzban" >> "$ENV_FILE"
         echo "MYSQL_PASSWORD=$MYSQL_PASSWORD" >> "$ENV_FILE"
         
-        SQLALCHEMY_DATABASE_URL="mysql+pymysql://${MYSQL_USER}:${MYSQL_PASSWORD}@127.0.0.1:3306/${MYSQL_DATABASE}"
+        SQLALCHEMY_DATABASE_URL="mysql+pymysql://marzban:${MYSQL_PASSWORD}@127.0.0.1:3306/${MYSQL_DATABASE}"
         
         echo "" >> "$ENV_FILE"
         echo "# SQLAlchemy Database URL" >> "$ENV_FILE"
@@ -493,7 +493,7 @@ EOF
         echo "MYSQL_USER=marzban" >> "$ENV_FILE"
         echo "MYSQL_PASSWORD=$MYSQL_PASSWORD" >> "$ENV_FILE"
         
-        SQLALCHEMY_DATABASE_URL="mysql+pymysql://${MYSQL_USER}:${MYSQL_PASSWORD}@127.0.0.1:3306/${MYSQL_DATABASE}"
+        SQLALCHEMY_DATABASE_URL="mysql+pymysql://marzban:${MYSQL_PASSWORD}@127.0.0.1:3306/${MYSQL_DATABASE}"
         
         echo "" >> "$ENV_FILE"
         echo "# SQLAlchemy Database URL" >> "$ENV_FILE"
@@ -601,6 +601,7 @@ prompt_for_marzban_password() {
     fi
 
     colorized_echo yellow "Using password: $MYSQL_PASSWORD"
+    colorized_echo yellow "Using user: marzban"
     colorized_echo magenta "This password will be recorded in the .env file for future use."
 
     # Пауза 3 секунды перед продолжением
