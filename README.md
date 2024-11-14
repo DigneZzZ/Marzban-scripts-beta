@@ -60,3 +60,6 @@ Use help to view all commands: `marzban-node help`
 
 ![image](https://github.com/user-attachments/assets/d585419f-4881-4327-a978-a181de87d9cd)
 
+## My Community: https://openode.xyz
+### My community is openode.xyz, where you’ll find many useful guides.
+The Marzban Club is available through a paid subscription, providing numerous detailed and helpful guides on setting up and installing Marzban and other proxy panels.
