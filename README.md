@@ -64,5 +64,6 @@ Use help to view all commands: `marzban-node help`
 ### My community is openode.xyz, where you’ll find many useful guides.
 The Marzban Club is available through a paid subscription, providing numerous detailed and helpful guides on setting up and installing Marzban and other proxy panels.
 
-# My blog: https://neonode.cc
+## My blog: https://neonode.cc
+
 
