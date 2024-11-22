@@ -304,7 +304,7 @@ update_core_command() {
     
     # Restart Marzban
     colorized_echo red "Restarting Marzban..."
-    marzban restart -n >/dev/null 2>&1
+    restart_command -n >/dev/null 2>&1
     colorized_echo blue "Installation of Xray-core version $selected_version completed."
 }
 
@@ -840,6 +840,8 @@ restart_command() {
     if [ "$no_logs" = false ]; then
         follow_marzban_logs
     fi
+    
+    colorized_echo green "Marzban successfully restarted!"
 }
 logs_command() {
     help() {
