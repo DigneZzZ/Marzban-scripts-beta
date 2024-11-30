@@ -62,20 +62,27 @@ SCRIPT_URL="https://github.com/$FETCH_REPO/raw/main/node.sh"
 colorized_echo() {
     local color=$1
     local text=$2
-    
+    local style=${3:-0}  # Default style is normal
+
     case $color in
         "red")
-        printf "\e[91m${text}\e[0m\n";;
+            printf "\e[${style};91m${text}\e[0m\n"
+        ;;
         "green")
-        printf "\e[92m${text}\e[0m\n";;
+            printf "\e[${style};92m${text}\e[0m\n"
+        ;;
         "yellow")
-        printf "\e[93m${text}\e[0m\n";;
+            printf "\e[${style};93m${text}\e[0m\n"
+        ;;
         "blue")
-        printf "\e[94m${text}\e[0m\n";;
+            printf "\e[${style};94m${text}\e[0m\n"
+        ;;
         "magenta")
-        printf "\e[95m${text}\e[0m\n";;
+            printf "\e[${style};95m${text}\e[0m\n"
+        ;;
         "cyan")
-        printf "\e[96m${text}\e[0m\n";;
+            printf "\e[${style};96m${text}\e[0m\n"
+        ;;
         *)
             echo "${text}"
         ;;
@@ -724,7 +731,21 @@ identify_the_operating_system_and_architecture() {
         exit 1
     fi
 }
-
+get_current_xray_core_version() {
+    XRAY_BINARY="$DATA_MAIN_DIR/xray-core/xray"
+    if [ -f "$XRAY_BINARY" ]; then
+        version_output=$("$XRAY_BINARY" -version 2>/dev/null)
+        if [ $? -eq 0 ]; then
+            # Extract the version number from the first line
+            version=$(echo "$version_output" | head -n1 | awk '{print $2}')
+            echo "$version"
+        else
+            echo "Unknown"
+        fi
+    else
+        echo "Not installed"
+    fi
+}
 # Function to update the Xray core
 get_xray_core() {
     identify_the_operating_system_and_architecture
@@ -747,6 +768,9 @@ get_xray_core() {
         clear
         echo -e "\033[1;32m==============================\033[0m"
         echo -e "\033[1;32m      Xray-core Installer     \033[0m"
+        echo -e "\033[1;32m==============================\033[0m"
+           current_version=$(get_current_xray_core_version)
+    echo -e "\033[1;33m>>>> Current Xray-core version: \033[1;1m$current_version\033[0m"
         echo -e "\033[1;32m==============================\033[0m"
         echo -e "\033[1;33mAvailable Xray-core versions:\033[0m"
         for ((i=0; i<${#versions[@]}; i++)); do
@@ -837,6 +861,7 @@ install_yq() {
     identify_the_operating_system_and_architecture
     local base_url="https://github.com/mikefarah/yq/releases/latest/download"
     local yq_binary=""
+
     case "$(uname)" in
         "Linux")
             case "$ARCH" in
@@ -849,28 +874,11 @@ install_yq() {
                 'arm64-v8a')
                     yq_binary="yq_linux_arm64"
                 ;;
-                'ppc64le')
-                    yq_binary="yq_linux_ppc64le"
-                ;;
-                's390x')
-                    yq_binary="yq_linux_s390x"
+                '386')
+                    yq_binary="yq_linux_386"
                 ;;
                 *)
                     echo "Error: Unsupported architecture for Linux: $ARCH" >&2
-                    exit 1
-                ;;
-            esac
-        ;;
-        "Darwin")
-            case "$ARCH" in
-                '64')
-                    yq_binary="yq_darwin_amd64"
-                ;;
-                'arm64-v8a')
-                    yq_binary="yq_darwin_arm64"
-                ;;
-                *)
-                    echo "Error: Unsupported architecture for macOS: $ARCH" >&2
                     exit 1
                 ;;
             esac
@@ -880,6 +888,7 @@ install_yq() {
             exit 1
         ;;
     esac
+
     local yq_url="$base_url/$yq_binary"
     sudo wget -q -O /usr/local/bin/yq "$yq_url" 2>/dev/null && \
     sudo chmod +x /usr/local/bin/yq 2>/dev/null
@@ -890,6 +899,7 @@ install_yq() {
         exit 1
     fi
 }
+
 
 update_core_command() {
     check_running_as_root
@@ -969,6 +979,10 @@ usage() {
     colorized_echo cyan "Node Information:"
     colorized_echo magenta "  Cert file path: $CERT_FILE"
     colorized_echo magenta "  Node IP: $NODE_IP"
+    echo
+    current_version=$(get_current_xray_core_version)
+    colorized_echo cyan "Current Xray-core version: " 1  # 1 for bold
+    colorized_echo magenta "$current_version" 1
 
     DEFAULT_SERVICE_PORT="62050"
     DEFAULT_XRAY_API_PORT="62051"
