@@ -812,15 +812,22 @@ fi
     xray_filename="Xray-linux-$ARCH.zip"
     xray_download_url="https://github.com/XTLS/Xray-core/releases/download/${selected_version}/${xray_filename}"
     
-    echo -e "\033[1;33mDownloading Xray-core version ${selected_version} in the background...\033[0m"
-    wget "${xray_download_url}" -q &
-    wait
+    echo -e "\033[1;33mDownloading Xray-core version ${selected_version}...\033[0m"
+    wget "${xray_download_url}" -q
+    if [ $? -ne 0 ]; then
+        echo -e "\033[1;31mError: Failed to download Xray-core. Please check your internet connection or the version.\033[0m"
+        exit 1
+    fi
     
+    echo -e "\033[1;33mExtracting Xray-core...\033[0m"
+    unzip -o "${xray_filename}" >/dev/null 2>&1
+    if [ $? -ne 0 ]; then
+        echo -e "\033[1;31mError: Failed to extract Xray-core. Please check the downloaded file.\033[0m"
+        exit 1
+    fi
     
-    echo -e "\033[1;33mExtracting Xray-core in the background...\033[0m"
-    unzip -o "${xray_filename}" >/dev/null 2>&1 &
-    wait
     rm "${xray_filename}"
+
 }
 
 install_yq() {
