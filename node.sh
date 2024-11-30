@@ -736,17 +736,26 @@ get_current_xray_core_version() {
     if [ -f "$XRAY_BINARY" ]; then
         version_output=$("$XRAY_BINARY" -version 2>/dev/null)
         if [ $? -eq 0 ]; then
-            # Extract the version number from the first line
             version=$(echo "$version_output" | head -n1 | awk '{print $2}')
             echo "$version"
-        else
-            echo "Unknown"
+            return
         fi
-    else
-        echo "Not installed"
     fi
+
+    # If local binary is not found or failed, check in the Docker container
+    CONTAINER_NAME="$APP_NAME"
+    if docker ps --format '{{.Names}}' | grep -q "^$CONTAINER_NAME$"; then
+        version_output=$(docker exec "$CONTAINER_NAME" xray -version 2>/dev/null)
+        if [ $? -eq 0 ]; then
+            # Extract the version number from the first line
+            version=$(echo "$version_output" | head -n1 | awk '{print $2}')
+            echo "$version (in container)"
+            return
+        fi
+    fi
+
+    echo "Not installed"
 }
-# Function to update the Xray core
 get_xray_core() {
     identify_the_operating_system_and_architecture
     clear
