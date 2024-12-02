@@ -748,7 +748,7 @@ install_yq() {
     fi
 
     if command -v curl &>/dev/null; then
-        if curl -sSL "$yq_url" -o /usr/local/bin/yq; then
+        if curl -fsSL "$yq_url" -o /usr/local/bin/yq; then
             chmod +x /usr/local/bin/yq
             colorized_echo green "yq installed successfully!"
         else
