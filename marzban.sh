@@ -748,7 +748,7 @@ install_yq() {
     fi
 
     if command -v curl &>/dev/null; then
-        if curl -fsSL "$yq_url" -o /usr/local/bin/yq; then
+        if curl -L "$yq_url" -o /usr/local/bin/yq; then
             chmod +x /usr/local/bin/yq
             colorized_echo green "yq installed successfully!"
         else
@@ -756,7 +756,7 @@ install_yq() {
             exit 1
         fi
     elif command -v wget &>/dev/null; then
-        if wget -q -O /usr/local/bin/yq "$yq_url"; then
+        if wget --max-redirect=10 -O /usr/local/bin/yq "$yq_url"; then
             chmod +x /usr/local/bin/yq
             colorized_echo green "yq installed successfully!"
         else
@@ -770,6 +770,7 @@ install_yq() {
         exit 1
     fi
 }
+
 
 down_marzban() {
     $COMPOSE -f $COMPOSE_FILE -p "$APP_NAME" down
