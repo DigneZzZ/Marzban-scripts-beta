@@ -125,7 +125,7 @@ install_marzban_script() {
     FETCH_REPO="DigneZzZ/Marzban-scripts-beta"
     SCRIPT_URL="https://github.com/$FETCH_REPO/raw/main/marzban.sh"
     colorized_echo blue "Installing marzban script"
-    curl -sSL $SCRIPT_URL | install -m 755 /dev/stdin /usr/local/bin/marzban
+    curl -sSL $SCRIPT_URL | install -m 755 /dev/stdin /usr/local/bin/$APP_NAME
     colorized_echo green "marzban script installed successfully"
 }
 
@@ -1175,9 +1175,9 @@ uninstall_command() {
 }
 
 uninstall_marzban_script() {
-    if [ -f "/usr/local/bin/marzban" ]; then
+    if [ -f "/usr/local/bin/$APP_NAME" ]; then
         colorized_echo yellow "Removing marzban script"
-        rm "/usr/local/bin/marzban"
+        rm "/usr/local/bin/$APP_NAME"
     fi
 }
 
@@ -1407,7 +1407,7 @@ update_marzban_script() {
     FETCH_REPO="Gozargah/Marzban-scripts"
     SCRIPT_URL="https://github.com/$FETCH_REPO/raw/master/marzban.sh"
     colorized_echo blue "Updating marzban script"
-    curl -sSL $SCRIPT_URL | install -m 755 /dev/stdin /usr/local/bin/marzban
+    curl -sSL $SCRIPT_URL | install -m 755 /dev/stdin /usr/local/bin/$APP_NAME
     colorized_echo green "marzban script updated successfully"
 }
 
