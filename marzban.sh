@@ -207,6 +207,19 @@ backup_command() {
     mkdir -p "$backup_dir"
     mkdir -p "$temp_dir"
 
+    # Считываем пароль из .env
+    if [ -f "$ENV_FILE" ]; then
+        MYSQL_ROOT_PASSWORD=$(grep -Po '(?<=^MYSQL_ROOT_PASSWORD=).*' "$ENV_FILE")
+    else
+        colorized_echo red "Environment file (.env) not found."
+        exit 1
+    fi
+
+    if [ -z "$MYSQL_ROOT_PASSWORD" ]; then
+        colorized_echo red "MYSQL_ROOT_PASSWORD is not set in .env file."
+        exit 1
+    fi
+
     # Определяем базу данных из docker-compose.yml
     local db_type
     if grep -q "image: mariadb" "$COMPOSE_FILE"; then
