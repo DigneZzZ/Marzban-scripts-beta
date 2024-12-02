@@ -705,91 +705,69 @@ install_command() {
     follow_marzban_logs
 }
 
-
 install_yq() {
     if command -v yq &>/dev/null; then
-        echo "yq is already installed."
+        colorized_echo green "yq is already installed."
         return
     fi
 
-    # Detect architecture
-    ARCH=$(uname -m)
+    identify_the_operating_system_and_architecture
+
+    local base_url="https://github.com/mikefarah/yq/releases/latest/download"
+    local yq_binary=""
+
     case "$ARCH" in
-        x86_64)
+        '64' | 'x86_64')
             yq_binary="yq_linux_amd64"
             ;;
-        armv7l)
+        'arm32-v7a' | 'arm32-v6' | 'arm32-v5' | 'armv7l')
             yq_binary="yq_linux_arm"
             ;;
-        aarch64)
+        'arm64-v8a' | 'aarch64')
             yq_binary="yq_linux_arm64"
             ;;
-        i386 | i686)
+        '32' | 'i386' | 'i686')
             yq_binary="yq_linux_386"
             ;;
         *)
-            echo "Unsupported architecture: $ARCH"
+            colorized_echo red "Unsupported architecture: $ARCH"
             exit 1
             ;;
     esac
 
-    yq_url="https://github.com/mikefarah/yq/releases/latest/download/${yq_binary}"
-    echo "Downloading yq from ${yq_url}..."
+    local yq_url="${base_url}/${yq_binary}"
+    colorized_echo blue "Downloading yq from ${yq_url}..."
 
-    # Determine downloader
+    if ! command -v curl &>/dev/null && ! command -v wget &>/dev/null; then
+        colorized_echo yellow "Neither curl nor wget is installed. Attempting to install curl."
+        install_package curl || {
+            colorized_echo red "Failed to install curl. Please install curl or wget manually."
+            exit 1
+        }
+    fi
+
     if command -v curl &>/dev/null; then
-        downloader_cmd="curl -L -o"
-    elif command -v wget &>/dev/null; then
-        downloader_cmd="wget -O"
-    else
-        echo "Neither curl nor wget is installed. Attempting to install curl."
-
-        # Detect and install using available package manager
-        if command -v apt-get &>/dev/null; then
-            apt-get update && apt-get install -y curl
-        elif command -v yum &>/dev/null; then
-            yum install -y curl
-        elif command -v dnf &>/dev/null; then
-            dnf install -y curl
-        elif command -v pacman &>/dev/null; then
-            pacman -Sy --noconfirm curl
-        elif command -v zypper &>/dev/null; then
-            zypper install -y curl
+        if curl -L "$yq_url" -o /usr/local/bin/yq; then
+            chmod +x /usr/local/bin/yq
+            colorized_echo green "yq installed successfully!"
         else
-            echo "Cannot install curl automatically. Please install curl or wget manually."
+            colorized_echo red "Failed to download yq using curl. Please check your internet connection."
             exit 1
         fi
-
-        downloader_cmd="curl -L -o"
-    fi
-
-    # Set installation path
-    if [ "$(id -u)" -eq 0 ]; then
-        install_path="/usr/local/bin/yq"
-    else
-        install_path="$HOME/.local/bin/yq"
-        mkdir -p "$HOME/.local/bin"
-        # Add to PATH if not already
-        if ! echo "$PATH" | grep -q "$HOME/.local/bin"; then
-            export PATH="$HOME/.local/bin:$PATH"
-            echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$HOME/.profile"
-            echo "Added $HOME/.local/bin to PATH."
+    elif command -v wget &>/dev/null; then
+        if wget -O /usr/local/bin/yq "$yq_url"; then
+            chmod +x /usr/local/bin/yq
+            colorized_echo green "yq installed successfully!"
+        else
+            colorized_echo red "Failed to download yq using wget. Please check your internet connection."
+            exit 1
         fi
     fi
 
-    # Download and install yq
-    $downloader_cmd "$install_path" "$yq_url" || {
-        echo "Failed to download yq. Please check your internet connection."
-        exit 1
-    }
-    chmod +x "$install_path"
-
     if ! command -v yq &>/dev/null; then
-        echo "yq installation failed. Please try again or install manually."
+        colorized_echo red "yq installation failed. Please try again or install manually."
         exit 1
     fi
-
-    echo "yq installed successfully!"
 }
 
 
