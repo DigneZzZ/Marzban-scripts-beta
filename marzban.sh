@@ -211,10 +211,13 @@ backup_command() {
     local db_type
     if grep -q "image: mariadb" "$COMPOSE_FILE"; then
         db_type="mariadb"
+        container_name=$(docker compose -f "$COMPOSE_FILE" ps -q mariadb || echo "mariadb")
     elif grep -q "image: mysql" "$COMPOSE_FILE"; then
         db_type="mysql"
+        container_name=$(docker compose -f "$COMPOSE_FILE" ps -q mysql || echo "mysql")
     elif grep -q "SQLALCHEMY_DATABASE_URL = .*sqlite" "$ENV_FILE"; then
         db_type="sqlite"
+        container_name=""
     else
         colorized_echo red "Database type could not be determined."
         exit 1
@@ -225,13 +228,17 @@ backup_command() {
     # Дамп базы данных
     case $db_type in
         mariadb)
-            local container_name=$(grep -Po "(?<=^\s*mariadb:.*\n\s*container_name:\s*)\S+" "$COMPOSE_FILE")
-            [ -z "$container_name" ] && container_name="mariadb"
+            if [ -z "$container_name" ]; then
+                colorized_echo red "MariaDB container not found."
+                exit 1
+            fi
             docker exec "$container_name" mariadb-dump -u root -p"$MYSQL_ROOT_PASSWORD" --all-databases > "$temp_dir/db_backup.sql"
             ;;
         mysql)
-            local container_name=$(grep -Po "(?<=^\s*mysql:.*\n\s*container_name:\s*)\S+" "$COMPOSE_FILE")
-            [ -z "$container_name" ] && container_name="mysql"
+            if [ -z "$container_name" ]; then
+                colorized_echo red "MySQL container not found."
+                exit 1
+            fi
             docker exec "$container_name" mysqldump -u root -p"$MYSQL_ROOT_PASSWORD" --all-databases > "$temp_dir/db_backup.sql"
             ;;
         sqlite)
@@ -245,7 +252,7 @@ backup_command() {
     cp "$APP_DIR/docker-compose.yml" "$temp_dir/"
 
     # Архивируем папку /var/lib/marzban, исключая xray-core и mysql
-    rsync -av --exclude 'xray-core' --exclude 'mysql' "$DATA_DIR/" "$temp_dir/marzban_data/"
+    rsync -av --exclude 'xray-core' --exclude 'mysql' "$DATA_DIR/" "$temp_dir/marzban_data/" >/dev/null
 
     # Создаем архив
     tar -czf "$backup_file" -C "$temp_dir" .
@@ -255,6 +262,7 @@ backup_command() {
 
     colorized_echo green "Backup created: $backup_file"
 }
+
 
 
 
