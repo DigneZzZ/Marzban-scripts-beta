@@ -746,6 +746,7 @@ install_yq() {
         }
     fi
 
+
     if command -v curl &>/dev/null; then
         if curl -L "$yq_url" -o /usr/local/bin/yq; then
             chmod +x /usr/local/bin/yq
@@ -764,11 +765,26 @@ install_yq() {
         fi
     fi
 
-    if ! command -v yq &>/dev/null; then
+
+    if ! echo "$PATH" | grep -q "/usr/local/bin"; then
+        export PATH="/usr/local/bin:$PATH"
+    fi
+
+
+    hash -r
+
+    if command -v yq &>/dev/null; then
+        colorized_echo green "yq is ready to use."
+    elif [ -x "/usr/local/bin/yq" ]; then
+
+        colorized_echo yellow "yq is installed at /usr/local/bin/yq but not found in PATH."
+        colorized_echo yellow "You can add /usr/local/bin to your PATH environment variable."
+    else
         colorized_echo red "yq installation failed. Please try again or install manually."
         exit 1
     fi
 }
+
 
 
 
