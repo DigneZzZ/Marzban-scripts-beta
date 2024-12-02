@@ -704,6 +704,8 @@ install_command() {
     up_marzban
     follow_marzban_logs
 }
+
+
 install_yq() {
     if command -v yq &>/dev/null; then
         colorized_echo green "yq is already installed."
@@ -714,7 +716,6 @@ install_yq() {
 
     local base_url="https://github.com/mikefarah/yq/releases/latest/download"
     local yq_binary=""
-    local yq_path="/usr/local/bin/yq"
 
     case "$ARCH" in
         '64')
@@ -736,7 +737,6 @@ install_yq() {
     esac
 
     local yq_url="${base_url}/${yq_binary}"
-
     colorized_echo blue "Downloading yq from ${yq_url}..."
 
     if ! command -v curl &>/dev/null && ! command -v wget &>/dev/null; then
@@ -747,35 +747,29 @@ install_yq() {
         }
     fi
 
-
     if command -v curl &>/dev/null; then
-        curl -fsSL -o "$yq_path" "$yq_url" || {
-            colorized_echo red "Failed to download yq using curl. Retrying with wget..."
-            wget -q -O "$yq_path" "$yq_url" || {
-                colorized_echo red "Failed to download yq using wget. Please check your internet connection."
-                exit 1
-            }
-        }
+        if curl -sSL "$yq_url" -o /usr/local/bin/yq; then
+            chmod +x /usr/local/bin/yq
+            colorized_echo green "yq installed successfully!"
+        else
+            colorized_echo red "Failed to download yq using curl. Please check your internet connection."
+            exit 1
+        fi
     elif command -v wget &>/dev/null; then
-        wget -q -O "$yq_path" "$yq_url" || {
+        if wget -q -O /usr/local/bin/yq "$yq_url"; then
+            chmod +x /usr/local/bin/yq
+            colorized_echo green "yq installed successfully!"
+        else
             colorized_echo red "Failed to download yq using wget. Please check your internet connection."
             exit 1
-        }
+        fi
     fi
 
-    chmod +x "$yq_path" || {
-        colorized_echo red "Failed to make yq executable. Please check permissions for /usr/local/bin."
-        exit 1
-    }
-
-    if command -v yq &>/dev/null; then
-        colorized_echo green "yq installed successfully!"
-    else
+    if ! command -v yq &>/dev/null; then
         colorized_echo red "yq installation failed. Please try again or install manually."
         exit 1
     fi
 }
-
 
 down_marzban() {
     $COMPOSE -f $COMPOSE_FILE -p "$APP_NAME" down
