@@ -196,6 +196,69 @@ identify_the_operating_system_and_architecture() {
     fi
 }
 
+backup_command() {
+    local backup_dir="$APP_DIR/backup"
+    local temp_dir="/tmp/marzban_backup"
+    local timestamp=$(date +"%Y%m%d%H%M%S")
+    local backup_file="$backup_dir/backup_$timestamp.tar.gz"
+
+    # Очищаем папку бэкапа
+    rm -rf "$backup_dir"
+    mkdir -p "$backup_dir"
+    mkdir -p "$temp_dir"
+
+    # Определяем базу данных из docker-compose.yml
+    local db_type
+    if grep -q "image: mariadb" "$COMPOSE_FILE"; then
+        db_type="mariadb"
+    elif grep -q "image: mysql" "$COMPOSE_FILE"; then
+        db_type="mysql"
+    elif grep -q "SQLALCHEMY_DATABASE_URL = .*sqlite" "$ENV_FILE"; then
+        db_type="sqlite"
+    else
+        colorized_echo red "Database type could not be determined."
+        exit 1
+    fi
+
+    colorized_echo blue "Database detected: $db_type"
+
+    # Дамп базы данных
+    case $db_type in
+        mariadb)
+            local container_name=$(grep -Po "(?<=^\s*mariadb:.*\n\s*container_name:\s*)\S+" "$COMPOSE_FILE")
+            [ -z "$container_name" ] && container_name="mariadb"
+            docker exec "$container_name" mariadb-dump -u root -p"$MYSQL_ROOT_PASSWORD" --all-databases > "$temp_dir/db_backup.sql"
+            ;;
+        mysql)
+            local container_name=$(grep -Po "(?<=^\s*mysql:.*\n\s*container_name:\s*)\S+" "$COMPOSE_FILE")
+            [ -z "$container_name" ] && container_name="mysql"
+            docker exec "$container_name" mysqldump -u root -p"$MYSQL_ROOT_PASSWORD" --all-databases > "$temp_dir/db_backup.sql"
+            ;;
+        sqlite)
+            local sqlite_file=$(grep -Po '(?<=SQLALCHEMY_DATABASE_URL = "sqlite:////).*"' "$ENV_FILE" | tr -d '"')
+            cp "$sqlite_file" "$temp_dir/db_backup.sqlite"
+            ;;
+    esac
+
+    # Копируем необходимые файлы
+    cp "$APP_DIR/.env" "$temp_dir/"
+    cp "$APP_DIR/docker-compose.yml" "$temp_dir/"
+
+    # Архивируем папку /var/lib/marzban, исключая xray-core и mysql
+    rsync -av --exclude 'xray-core' --exclude 'mysql' "$DATA_DIR/" "$temp_dir/marzban_data/"
+
+    # Создаем архив
+    tar -czf "$backup_file" -C "$temp_dir" .
+
+    # Очищаем временную папку
+    rm -rf "$temp_dir"
+
+    colorized_echo green "Backup created: $backup_file"
+}
+
+
+
+
 get_xray_core() {
     identify_the_operating_system_and_architecture
     clear
@@ -284,6 +347,8 @@ get_xray_core() {
     unzip -o "${xray_filename}" >/dev/null 2>&1
     rm "${xray_filename}"
 }
+
+
 
 # Function to update the Marzban Main core
 update_core_command() {
@@ -1175,6 +1240,8 @@ case "$1" in
         shift; logs_command "$@";;
     cli)
         shift; cli_command "$@";;
+    backup)
+        shift; backup_command "$@";;
     install)
         shift; install_command "$@";;
     update)
