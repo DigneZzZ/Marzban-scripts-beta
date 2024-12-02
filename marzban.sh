@@ -665,9 +665,10 @@ install_command() {
     if ! command -v docker >/dev/null 2>&1; then
         install_docker
     fi
-    if ! command -v yq >/dev/null 2>&1; then
+    if ! [ -x "$(command -v yq)" ]; then
         install_yq
     fi
+
     detect_compose
     install_marzban_script
     # Function to check if a version exists in the GitHub releases
