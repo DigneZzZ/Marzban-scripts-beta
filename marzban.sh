@@ -1500,6 +1500,8 @@ case "$1" in
         shift; cli_command "$@";;
     backup)
         shift; backup_command "$@";;
+    backup-service)
+        shift; backup_service "$@";;
     install)
         shift; install_command "$@";;
     update)
