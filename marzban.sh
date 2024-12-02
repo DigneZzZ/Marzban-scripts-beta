@@ -743,16 +743,23 @@ install_yq() {
         downloader_cmd="wget -O"
     else
         echo "Neither curl nor wget is installed. Attempting to install curl."
+
+        # Detect and install using available package manager
         if command -v apt-get &>/dev/null; then
             apt-get update && apt-get install -y curl
         elif command -v yum &>/dev/null; then
             yum install -y curl
         elif command -v dnf &>/dev/null; then
             dnf install -y curl
+        elif command -v pacman &>/dev/null; then
+            pacman -Sy --noconfirm curl
+        elif command -v zypper &>/dev/null; then
+            zypper install -y curl
         else
             echo "Cannot install curl automatically. Please install curl or wget manually."
             exit 1
         fi
+
         downloader_cmd="curl -L -o"
     fi
 
