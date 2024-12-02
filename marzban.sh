@@ -1411,8 +1411,8 @@ update_command() {
 }
 
 update_marzban_script() {
-    FETCH_REPO="Gozargah/Marzban-scripts"
-    SCRIPT_URL="https://github.com/$FETCH_REPO/raw/master/marzban.sh"
+    FETCH_REPO="DigneZzZ/Marzban-scripts-beta"
+    SCRIPT_URL="https://github.com/$FETCH_REPO/raw/main/marzban.sh"
     colorized_echo blue "Updating marzban script"
     curl -sSL $SCRIPT_URL | install -m 755 /dev/stdin /usr/local/bin/$APP_NAME
     colorized_echo green "marzban script updated successfully"
