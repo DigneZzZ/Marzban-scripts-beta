@@ -735,7 +735,10 @@ install_yq() {
     esac
 
     local yq_url="${base_url}/${yq_binary}"
+    local yq_path="/usr/local/bin/yq"
+
     colorized_echo blue "Downloading yq from ${yq_url}..."
+
 
     if ! command -v curl &>/dev/null && ! command -v wget &>/dev/null; then
         colorized_echo yellow "Neither curl nor wget is installed. Attempting to install curl."
@@ -745,25 +748,27 @@ install_yq() {
         }
     fi
 
+
     if command -v curl &>/dev/null; then
-        if curl -sSL "$yq_url" -o /usr/local/bin/yq; then
-            chmod +x /usr/local/bin/yq
-            colorized_echo green "yq installed successfully!"
-        else
+        curl -sSL "$yq_url" -o "$yq_path" || {
             colorized_echo red "Failed to download yq using curl. Please check your internet connection."
             exit 1
-        fi
+        }
     elif command -v wget &>/dev/null; then
-        if wget -q -O /usr/local/bin/yq "$yq_url"; then
-            chmod +x /usr/local/bin/yq
-            colorized_echo green "yq installed successfully!"
-        else
+        wget -q -O "$yq_path" "$yq_url" || {
             colorized_echo red "Failed to download yq using wget. Please check your internet connection."
             exit 1
-        fi
+        }
     fi
 
-    if ! command -v yq &>/dev/null; then
+    chmod +x "$yq_path" || {
+        colorized_echo red "Failed to make yq executable. Please check permissions for /usr/local/bin."
+        exit 1
+    }
+
+    if command -v yq &>/dev/null; then
+        colorized_echo green "yq installed successfully!"
+    else
         colorized_echo red "yq installation failed. Please try again or install manually."
         exit 1
     fi
