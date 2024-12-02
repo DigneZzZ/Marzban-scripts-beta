@@ -714,6 +714,7 @@ install_yq() {
 
     local base_url="https://github.com/mikefarah/yq/releases/latest/download"
     local yq_binary=""
+    local yq_path="/usr/local/bin/yq"
 
     case "$ARCH" in
         '64')
@@ -735,10 +736,8 @@ install_yq() {
     esac
 
     local yq_url="${base_url}/${yq_binary}"
-    local yq_path="/usr/local/bin/yq"
 
     colorized_echo blue "Downloading yq from ${yq_url}..."
-
 
     if ! command -v curl &>/dev/null && ! command -v wget &>/dev/null; then
         colorized_echo yellow "Neither curl nor wget is installed. Attempting to install curl."
@@ -750,9 +749,12 @@ install_yq() {
 
 
     if command -v curl &>/dev/null; then
-        curl -sSL "$yq_url" -o "$yq_path" || {
-            colorized_echo red "Failed to download yq using curl. Please check your internet connection."
-            exit 1
+        curl -fsSL -o "$yq_path" "$yq_url" || {
+            colorized_echo red "Failed to download yq using curl. Retrying with wget..."
+            wget -q -O "$yq_path" "$yq_url" || {
+                colorized_echo red "Failed to download yq using wget. Please check your internet connection."
+                exit 1
+            }
         }
     elif command -v wget &>/dev/null; then
         wget -q -O "$yq_path" "$yq_url" || {
@@ -773,6 +775,7 @@ install_yq() {
         exit 1
     fi
 }
+
 
 down_marzban() {
     $COMPOSE -f $COMPOSE_FILE -p "$APP_NAME" down
