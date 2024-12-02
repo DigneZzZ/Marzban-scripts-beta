@@ -718,16 +718,16 @@ install_yq() {
     local yq_binary=""
 
     case "$ARCH" in
-        '64')
+        'amd64' | 'x86_64')
             yq_binary="yq_linux_amd64"
             ;;
-        'arm32-v7a' | 'arm32-v6' | 'arm32-v5')
+        'armv7l' | 'arm32')
             yq_binary="yq_linux_arm"
             ;;
-        'arm64-v8a')
+        'aarch64' | 'arm64')
             yq_binary="yq_linux_arm64"
             ;;
-        '32')
+        'i386' | 'i686')
             yq_binary="yq_linux_386"
             ;;
         *)
@@ -748,20 +748,37 @@ install_yq() {
     fi
 
     if command -v curl &>/dev/null; then
-        if curl -L "$yq_url" -o /usr/local/bin/yq; then
-            chmod +x /usr/local/bin/yq
-            colorized_echo green "yq installed successfully!"
-        else
-            colorized_echo red "Failed to download yq using curl. Please check your internet connection."
-            exit 1
-        fi
+        downloader="curl -L ${yq_url} -o"
     elif command -v wget &>/dev/null; then
-        if wget --max-redirect=10 -O /usr/local/bin/yq "$yq_url"; then
-            chmod +x /usr/local/bin/yq
-            colorized_echo green "yq installed successfully!"
+        downloader="wget --max-redirect=10 -O"
+    else
+        colorized_echo red "Neither curl nor wget is available. Cannot download yq."
+        exit 1
+    fi
+
+    # Check if running as root
+    if [ "$(id -u)" -eq 0 ]; then
+        # Install to /usr/local/bin
+        $downloader /usr/local/bin/yq
+        chmod +x /usr/local/bin/yq
+    else
+        # Not running as root
+        if command -v sudo &>/dev/null; then
+            # Use sudo if available
+            sudo $downloader /usr/local/bin/yq
+            sudo chmod +x /usr/local/bin/yq
         else
-            colorized_echo red "Failed to download yq using wget. Please check your internet connection."
-            exit 1
+            # Install to user's local bin directory
+            mkdir -p "$HOME/.local/bin"
+            $downloader "$HOME/.local/bin/yq"
+            chmod +x "$HOME/.local/bin/yq"
+
+            # Add $HOME/.local/bin to PATH if not already present
+            if ! echo "$PATH" | grep -q "$HOME/.local/bin"; then
+                export PATH="$HOME/.local/bin:$PATH"
+                echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$HOME/.profile"
+                colorized_echo yellow "Added $HOME/.local/bin to PATH."
+            fi
         fi
     fi
 
@@ -769,7 +786,10 @@ install_yq() {
         colorized_echo red "yq installation failed. Please try again or install manually."
         exit 1
     fi
+
+    colorized_echo green "yq installed successfully!"
 }
+
 
 
 down_marzban() {
