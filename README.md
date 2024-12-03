@@ -25,7 +25,7 @@ sudo bash -c "$(curl -sL https://github.com/DigneZzZ/Marzban-scripts-beta/raw/ma
   sudo bash -c "$(curl -sL https://github.com/DigneZzZ/Marzban-scripts-beta/raw/main/marzban.sh)" @ install --database mariadb --dev
   ```
 
-- **Install Marzban with MariaDB and Manual version **:
+- **Install Marzban with MariaDB and Manual version**:
 
   ```bash
   sudo bash -c "$(curl -sL https://github.com/DigneZzZ/Marzban-scripts-beta/raw/main/marzban.sh)" @ install --database mariadb --version v0.5.2
