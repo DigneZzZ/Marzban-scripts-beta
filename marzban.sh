@@ -2,14 +2,7 @@
 set -e
 
 INSTALL_DIR="/opt"
-# Set APP_NAME based on the script's filename if not already set
 if [ -z "$APP_NAME" ]; then
-    SCRIPT_NAME=$(basename "$0")
-    APP_NAME="${SCRIPT_NAME%.*}"
-fi
-
-# Provide a default APP_NAME during installation if not set
-if [[ "$COMMAND" == "install" || "$COMMAND" == "install-script" ]] && [ -z "$APP_NAME" ]; then
     APP_NAME="marzban"
 fi
 APP_DIR="$INSTALL_DIR/$APP_NAME"
@@ -17,6 +10,7 @@ DATA_DIR="/var/lib/$APP_NAME"
 COMPOSE_FILE="$APP_DIR/docker-compose.yml"
 ENV_FILE="$APP_DIR/.env"
 LAST_XRAY_CORES=10
+
 
 colorized_echo() {
     local color=$1
