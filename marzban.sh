@@ -540,24 +540,31 @@ backup_service() {
     local telegram_chat_id=""
     local cron_schedule=""
     local interval_hours=""
+    local human_readable_interval=""
 
     colorized_echo blue "====================================="
     colorized_echo blue "      Welcome to Backup Service      "
     colorized_echo blue "====================================="
 
-
+    # Проверяем, есть ли уже настроенный бэкап
     if grep -q "BACKUP_SERVICE_ENABLED=true" "$ENV_FILE"; then
-
         telegram_bot_key=$(awk -F'=' '/^BACKUP_TELEGRAM_BOT_KEY=/ {gsub(/^[ \t]+|[ \t]+$/, "", $2); print $2}' "$ENV_FILE")
         telegram_chat_id=$(awk -F'=' '/^BACKUP_TELEGRAM_CHAT_ID=/ {gsub(/^[ \t]+|[ \t]+$/, "", $2); print $2}' "$ENV_FILE")
         cron_schedule=$(awk -F'=' '/^BACKUP_CRON_SCHEDULE=/ {gsub(/^[ \t]+|[ \t]+$/, "", $2); print $2}' "$ENV_FILE" | tr -d '"')
         interval_hours=$(echo "$cron_schedule" | grep -oP '\*/\K[0-9]+')
 
+        # Обрабатываем вывод для интервала 0 (т.е. 24 часа)
+        if [[ "$interval_hours" == "0" ]]; then
+            human_readable_interval="24"
+        else
+            human_readable_interval="$interval_hours"
+        fi
+
         colorized_echo green "====================================="
         colorized_echo green "Current Backup Configuration:"
         colorized_echo cyan "Telegram Bot API Key: $telegram_bot_key"
         colorized_echo cyan "Telegram Chat ID: $telegram_chat_id"
-        colorized_echo cyan "Backup Interval: Every $interval_hours hour(s)"
+        colorized_echo cyan "Backup Interval: Every $human_readable_interval hour(s)"
         colorized_echo green "====================================="
 
         echo "Choose an option:"
@@ -569,6 +576,7 @@ backup_service() {
         case $user_choice in
             1)
                 colorized_echo yellow "Starting reconfiguration..."
+                # Удаляем предыдущие настройки бэкапа из .env
                 colorized_echo yellow "Removing previous backup configurations from .env..."
                 sed -i '/^# Backup service configuration/d' "$ENV_FILE"
                 sed -i '/BACKUP_SERVICE_ENABLED/d' "$ENV_FILE"
@@ -594,9 +602,9 @@ backup_service() {
         colorized_echo yellow "No backup service is currently configured."
     fi
 
-
+    # Ввод Telegram Bot API Key
     while true; do
-        colorized_echo blue "------------------"
+        colorized_echo blue "====================================="
         read -p "Enter your Telegram bot API key: " telegram_bot_key
         if [[ -n "$telegram_bot_key" ]]; then
             break
@@ -605,9 +613,9 @@ backup_service() {
         fi
     done
 
-
+    # Ввод Telegram Chat ID
     while true; do
-        colorized_echo blue "------------------"
+        colorized_echo blue "====================================="
         read -p "Enter your Telegram chat ID: " telegram_chat_id
         if [[ -n "$telegram_chat_id" ]]; then
             break
@@ -616,7 +624,7 @@ backup_service() {
         fi
     done
 
-
+    # Установка интервала бэкапа
     while true; do
         colorized_echo blue "====================================="
         colorized_echo yellow "Set up the backup interval in hours (1-24)."
@@ -631,10 +639,10 @@ backup_service() {
         fi
     done
 
-
     cron_schedule="0 */$hours * * *"
+    human_readable_interval=$([ "$hours" == "0" ] && echo "24" || echo "$hours")
 
-
+    # Сохранение конфигурации в .env
     {
         echo ""
         echo "# Backup service configuration"
@@ -647,30 +655,35 @@ backup_service() {
     colorized_echo green "====================================="
     colorized_echo green "Backup service configuration saved in $ENV_FILE."
 
- 
+    # Настройка crontab
     local temp_cron=$(mktemp)
+    local backup_command="$(which bash) -c '$APP_NAME backup'"
 
-  
+    # Загружаем текущие задания cron
     crontab -l 2>/dev/null > "$temp_cron"
 
-  
-    grep -vE "$(which bash).*${APP_NAME} backup" "$temp_cron" > "$temp_cron.tmp" && mv "$temp_cron.tmp" "$temp_cron"
+    # Удаляем предыдущие задания бэкапа
+    grep -vE "$backup_command" "$temp_cron" > "$temp_cron.tmp" && mv "$temp_cron.tmp" "$temp_cron"
 
+    # Добавляем новое задание
+    echo "$cron_schedule $backup_command # marzban-backup-service" >> "$temp_cron"
 
-    echo "$cron_schedule $(which bash) -c '$APP_NAME backup' # marzban-backup-service" >> "$temp_cron"
+    # Применяем новые задания cron
+    if crontab "$temp_cron"; then
+        colorized_echo green "Cron job successfully added."
+    else
+        colorized_echo red "Failed to add cron job. Please check manually."
+    fi
 
-cat "$temp_cron"
-
-    crontab "$temp_cron"
-
-
+    # Удаляем временный файл
     rm -f "$temp_cron"
 
     colorized_echo green "====================================="
     colorized_echo green "Backup service successfully configured."
-    colorized_echo cyan "Backups will be sent to Telegram every $hours hour(s)."
+    colorized_echo cyan "Backups will be sent to Telegram every $human_readable_interval hour(s)."
     colorized_echo green "====================================="
 }
+
 
 remove_backup_service() {
     colorized_echo red "in process..."
