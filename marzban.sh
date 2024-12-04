@@ -585,12 +585,12 @@ get_xray_core() {
     if ! command -v unzip >/dev/null 2>&1; then
         echo -e "\033[1;33mInstalling required packages...\033[0m"
         detect_os
-        install_package unzip
+        install_package unzip >/dev/null 2>&1
     fi
     if ! command -v wget >/dev/null 2>&1; then
         echo -e "\033[1;33mInstalling required packages...\033[0m"
         detect_os
-        install_package wget
+        install_package wget >/dev/null 2>&1
     fi
 
     mkdir -p $DATA_DIR/xray-core
@@ -600,7 +600,7 @@ get_xray_core() {
     xray_download_url="https://github.com/XTLS/Xray-core/releases/download/${selected_version}/${xray_filename}"
 
     echo -e "\033[1;33mDownloading Xray-core version ${selected_version}...\033[0m"
-    wget -q -O "${xray_filename}" "${xray_download_url}"
+    wget -q -O "${xray_filename}" "${xray_download_url}" >/dev/null 2>&1
 
     echo -e "\033[1;33mExtracting Xray-core...\033[0m"
     unzip -o "${xray_filename}" >/dev/null 2>&1
