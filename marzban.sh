@@ -273,12 +273,12 @@ send_backup_error_to_telegram() {
     message+="❌ *Errors*:\n\`${error_messages//_/\\_}\`\n"
     message+="⏰ *Time*: \`${error_time}\`"
 
-    local max_length=1000
+    local max_length=4000
     if [ ${#message} -gt $max_length ]; then
         message="${message:0:$((max_length - 50))}...\n\`[Message truncated]\`"
     fi
 
-
+    # Отправляем сообщение с описанием ошибки
     curl -s -X POST "https://api.telegram.org/bot$BACKUP_TELEGRAM_BOT_KEY/sendMessage" \
         -d chat_id="$BACKUP_TELEGRAM_CHAT_ID" \
         -d parse_mode="MarkdownV2" \
@@ -286,20 +286,33 @@ send_backup_error_to_telegram() {
     colorized_echo green "Backup error notification sent to Telegram." || \
     colorized_echo red "Failed to send error notification to Telegram."
 
-
+    # Проверяем файл лога и отправляем его
     if [ -f "$log_file" ]; then
+        log_size=$(du -b "$log_file" | cut -f1)
+        if [ "$log_size" -gt $((50 * 1024 * 1024)) ]; then
+            colorized_echo red "Log file is too large to send via Telegram: ${log_size} bytes."
+            return
+        fi
 
-        curl -s -F chat_id="$BACKUP_TELEGRAM_CHAT_ID" \
+        response=$(curl -s -w "%{http_code}" -o /tmp/tg_response.json \
+            -F chat_id="$BACKUP_TELEGRAM_CHAT_ID" \
             -F document=@"$log_file;filename=backup_error.log" \
             -F caption="📜 *Backup Error Log* - ${error_time}" \
             -F parse_mode="MarkdownV2" \
-            "https://api.telegram.org/bot$BACKUP_TELEGRAM_BOT_KEY/sendDocument" >/dev/null 2>&1 && \
-        colorized_echo green "Backup error log sent to Telegram." || \
-        colorized_echo red "Failed to send backup error log to Telegram."
+            "https://api.telegram.org/bot$BACKUP_TELEGRAM_BOT_KEY/sendDocument")
+        
+        http_code="${response:(-3)}"
+        if [ "$http_code" -eq 200 ]; then
+            colorized_echo green "Backup error log sent to Telegram."
+        else
+            colorized_echo red "Failed to send backup error log to Telegram. HTTP code: $http_code"
+            cat /tmp/tg_response.json
+        fi
     else
         colorized_echo red "Log file not found: $log_file"
     fi
 }
+
 
 
 
