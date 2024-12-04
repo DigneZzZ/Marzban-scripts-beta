@@ -196,12 +196,40 @@ identify_the_operating_system_and_architecture() {
         exit 1
     fi
 }
-
 send_backup_to_telegram() {
-    local backup_file=$1
-    local databases=$2
+    if [ -f "$ENV_FILE" ]; then
+        while IFS='=' read -r key value; do
+            if [[ -z "$key" || "$key" =~ ^# ]]; then
+                continue
+            fi
+            key=$(echo "$key" | xargs)
+            value=$(echo "$value" | xargs)
+            if [[ "$key" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]]; then
+                export "$key"="$value"
+            else
+                colorized_echo yellow "Skipping invalid line in .env: $key=$value"
+            fi
+        done < "$ENV_FILE"
+    else
+        colorized_echo red "Environment file (.env) not found."
+        exit 1
+    fi
+
+    if [ "$BACKUP_SERVICE_ENABLED" != "true" ]; then
+        colorized_echo yellow "Backup service is not enabled. Skipping Telegram upload."
+        return
+    fi
+
     local server_ip=$(curl -s ifconfig.me || echo "Unknown IP")
-    local backup_size=$(du -m "$backup_file" | cut -f1)
+    local latest_backup=$(ls -t "$APP_DIR/backup" | head -n 1)
+    local backup_path="$APP_DIR/backup/$latest_backup"
+
+    if [ ! -f "$backup_path" ]; then
+        colorized_echo red "No backups found to send."
+        return
+    fi
+
+    local backup_size=$(du -m "$backup_path" | cut -f1)
     local split_dir="/tmp/marzban_backup_split"
     local is_single_file=true
 
@@ -209,26 +237,27 @@ send_backup_to_telegram() {
 
     if [ "$backup_size" -gt 49 ]; then
         colorized_echo yellow "Backup is larger than 49MB. Splitting the archive..."
-        split -b 49M "$backup_file" "$split_dir/part_"
+        split -b 49M "$backup_path" "$split_dir/part_"
         is_single_file=false
     else
-        cp "$backup_file" "$split_dir/part_aa"
+        cp "$backup_path" "$split_dir/part_aa"
     fi
+
+
+    local backup_time=$(date "+%Y-%m-%d %H:%M:%S %Z")
+
 
     for part in "$split_dir"/*; do
         local part_name=$(basename "$part")
-        local custom_filename="backup_${timestamp}_${part_name}.tar.gz"
+        local custom_filename="backup_${part_name}.tar.gz"
+        local caption="📦 *Backup Information*\n🌐 *Server IP*: \`${server_ip}\`\n📁 *Backup File*: \`${custom_filename}\`\n⏰ *Backup Time*: \`${backup_time}\`"
         curl -s -F chat_id="$BACKUP_TELEGRAM_CHAT_ID" \
             -F document=@"$part;filename=$custom_filename" \
-            -F caption="📦 *Backup Information*
-🌐 *Server IP*: \`${server_ip}\`
-📁 *Databases Included*: \`${databases}\`
-📁 *Backup File*: \`${custom_filename}\`
-⏰ *Backup Time*: \`${timestamp}\`" \
+            -F caption="$(echo -e "$caption" | sed 's/-/\\-/g;s/\./\\./g;s/_/\\_/g')" \
             -F parse_mode="MarkdownV2" \
             "https://api.telegram.org/bot$BACKUP_TELEGRAM_BOT_KEY/sendDocument" >/dev/null 2>&1 && \
-            colorized_echo green "Backup part $custom_filename successfully sent to Telegram." || \
-            colorized_echo red "Failed to send backup part $custom_filename to Telegram."
+        colorized_echo green "Backup part $custom_filename successfully sent to Telegram." || \
+        colorized_echo red "Failed to send backup part $custom_filename to Telegram."
     done
 
     rm -rf "$split_dir"
@@ -237,17 +266,23 @@ send_backup_to_telegram() {
 send_backup_error_to_telegram() {
     local error_messages=$1
     local server_ip=$(curl -s ifconfig.me || echo "Unknown IP")
+    local error_time=$(date "+%Y-%m-%d %H:%M:%S %Z")
+    local message="⚠️ *Backup Error Notification*\n"
+    message+="🌐 *Server IP*: \`${server_ip}\`\n"
+    message+="❌ *Errors*:\n\`${error_messages//_/\\_}\`\n"
+    message+="⏰ *Time*: \`${error_time}\`"
+    local max_length=4000
+    if [ ${#message} -gt $max_length ]; then
+        message="${message:0:$((max_length - 50))}...\n\`[Message truncated due to length]\`"
+    fi
     curl -s -X POST "https://api.telegram.org/bot$BACKUP_TELEGRAM_BOT_KEY/sendMessage" \
         -d chat_id="$BACKUP_TELEGRAM_CHAT_ID" \
         -d parse_mode="MarkdownV2" \
-        -d text="⚠️ *Backup Error Notification*
-🌐 *Server IP*: \`${server_ip}\`
-❌ *Errors*:
-\`${error_messages}\`
-⏰ *Time*: \`$(date)\`" >/dev/null 2>&1 && \
+        -d text="$(echo -e "$message" | sed 's/-/\\-/g;s/\./\\./g;s/_/\\_/g')" >/dev/null 2>&1 && \
         colorized_echo green "Backup error notification sent to Telegram." || \
         colorized_echo red "Failed to send error notification to Telegram."
 }
+
 
 backup_service() {
     local telegram_bot_key=""
@@ -259,12 +294,10 @@ backup_service() {
     colorized_echo blue "      Welcome to Backup Service      "
     colorized_echo blue "====================================="
 
-
     if grep -q "BACKUP_SERVICE_ENABLED=true" "$ENV_FILE"; then
         telegram_bot_key=$(awk -F'=' '/^BACKUP_TELEGRAM_BOT_KEY=/ {print $2}' "$ENV_FILE")
         telegram_chat_id=$(awk -F'=' '/^BACKUP_TELEGRAM_CHAT_ID=/ {print $2}' "$ENV_FILE")
         cron_schedule=$(awk -F'=' '/^BACKUP_CRON_SCHEDULE=/ {print $2}' "$ENV_FILE" | tr -d '"')
-
 
         if [[ "$cron_schedule" == "0 0 * * *" ]]; then
             interval_hours=24
@@ -307,7 +340,6 @@ backup_service() {
         colorized_echo yellow "No backup service is currently configured."
     fi
 
-
     while true; do
         printf "Enter your Telegram bot API key: "
         read telegram_bot_key
@@ -317,7 +349,6 @@ backup_service() {
             colorized_echo red "API key cannot be empty. Please try again."
         fi
     done
-
 
     while true; do
         printf "Enter your Telegram chat ID: "
@@ -329,24 +360,20 @@ backup_service() {
         fi
     done
 
-
     while true; do
         printf "Set up the backup interval in hours (1-24):\n"
         read interval_hours
-
 
         if ! [[ "$interval_hours" =~ ^[0-9]+$ ]]; then
             colorized_echo red "Invalid input. Please enter a valid number."
             continue
         fi
 
-
         if [[ "$interval_hours" -eq 24 ]]; then
             cron_schedule="0 0 * * *"
             colorized_echo green "Setting backup to run daily at midnight."
             break
         fi
-
 
         if [[ "$interval_hours" -ge 1 && "$interval_hours" -le 23 ]]; then
             cron_schedule="0 */$interval_hours * * *"
@@ -357,6 +384,10 @@ backup_service() {
         fi
     done
 
+    sed -i '/^BACKUP_SERVICE_ENABLED/d' "$ENV_FILE"
+    sed -i '/^BACKUP_TELEGRAM_BOT_KEY/d' "$ENV_FILE"
+    sed -i '/^BACKUP_TELEGRAM_CHAT_ID/d' "$ENV_FILE"
+    sed -i '/^BACKUP_CRON_SCHEDULE/d' "$ENV_FILE"
 
     {
         echo ""
@@ -365,10 +396,9 @@ backup_service() {
         echo "BACKUP_TELEGRAM_BOT_KEY=$telegram_bot_key"
         echo "BACKUP_TELEGRAM_CHAT_ID=$telegram_chat_id"
         echo "BACKUP_CRON_SCHEDULE=\"$cron_schedule\""
-    } > "$ENV_FILE"
+    } >> "$ENV_FILE"
 
     colorized_echo green "Backup service configuration saved in $ENV_FILE."
-
 
     local backup_command="$(which bash) -c '$APP_NAME backup'"
     add_cron_job "$cron_schedule" "$backup_command"
@@ -381,6 +411,7 @@ backup_service() {
     fi
     colorized_echo green "====================================="
 }
+
 
 add_cron_job() {
     local schedule="$1"
@@ -424,16 +455,15 @@ remove_backup_service() {
 
     colorized_echo green "Backup service has been removed."
 }
+
 backup_command() {
     local backup_dir="$APP_DIR/backup"
     local temp_dir="/tmp/marzban_backup"
     local timestamp=$(date +"%Y%m%d%H%M%S")
     local backup_file="$backup_dir/backup_$timestamp.tar.gz"
-    local databases_included=()
     local error_messages=()
 
     if ! command -v rsync >/dev/null 2>&1; then
-        colorized_echo yellow "rsync is not installed. Installing..."
         detect_os
         install_package rsync
     fi
@@ -443,66 +473,57 @@ backup_command() {
     mkdir -p "$temp_dir"
 
     if [ -f "$ENV_FILE" ]; then
-        MYSQL_ROOT_PASSWORD=$(grep -Po '(?<=^MYSQL_ROOT_PASSWORD=).*' "$ENV_FILE")
+        source "$ENV_FILE"
     else
-        local error_message="Environment file (.env) not found."
-        error_messages+=("$error_message")
+        error_messages+=("Environment file (.env) not found.")
         send_backup_error_to_telegram "${error_messages[*]}"
         exit 1
     fi
 
-    if [ -z "$MYSQL_ROOT_PASSWORD" ]; then
-        local error_message="MYSQL_ROOT_PASSWORD is not set in .env file."
-        error_messages+=("$error_message")
-        send_backup_error_to_telegram "${error_messages[*]}"
-        exit 1
-    fi
-
-    local db_type
+    local db_type=""
+    local sqlite_file=""
     if grep -q "image: mariadb" "$COMPOSE_FILE"; then
         db_type="mariadb"
         container_name=$(docker compose -f "$COMPOSE_FILE" ps -q mariadb || echo "mariadb")
-        databases_included=("all databases")
+
     elif grep -q "image: mysql" "$COMPOSE_FILE"; then
         db_type="mysql"
         container_name=$(docker compose -f "$COMPOSE_FILE" ps -q mysql || echo "mysql")
-        databases_included=("all databases")
+
     elif grep -q "SQLALCHEMY_DATABASE_URL = .*sqlite" "$ENV_FILE"; then
         db_type="sqlite"
-        container_name=""
-        databases_included=("SQLite database")
-    else
-        local error_message="Database type could not be determined."
-        error_messages+=("$error_message")
-        send_backup_error_to_telegram "${error_messages[*]}"
-        exit 1
+        sqlite_file=$(grep -Po '(?<=SQLALCHEMY_DATABASE_URL = "sqlite:////).*"' "$ENV_FILE" | tr -d '"')
+        if [[ ! "$sqlite_file" =~ ^/ ]]; then
+            sqlite_file="/$sqlite_file"
+        fi
+
     fi
 
-    colorized_echo blue "Database detected: $db_type"
-
-    case $db_type in
-        mariadb|mysql)
-            if ! docker exec "$container_name" mysqldump -u root -p"$MYSQL_ROOT_PASSWORD" --all-databases > "$temp_dir/db_backup.sql" 2>/dev/null; then
-                local error_message="Failed to dump databases from $db_type."
-                error_messages+=("$error_message")
-            fi
-            ;;
-        sqlite)
-            local sqlite_file=$(grep -Po '(?<=SQLALCHEMY_DATABASE_URL = "sqlite:////).*"' "$ENV_FILE" | tr -d '"')
-            if ! cp "$sqlite_file" "$temp_dir/db_backup.sqlite"; then
-                local error_message="Failed to copy SQLite database."
-                error_messages+=("$error_message")
-            fi
-            ;;
-    esac
+    if [ -n "$db_type" ]; then
+        case $db_type in
+            mariadb)
+                docker exec "$container_name" mariadb-dump -u root -p"$MYSQL_ROOT_PASSWORD" --all-databases > "$temp_dir/db_backup.sql" 2>/dev/null || error_messages+=("Failed to dump MariaDB database.")
+                ;;
+            mysql)
+                docker exec "$container_name" mysqldump -u root -p"$MYSQL_ROOT_PASSWORD" --all-databases > "$temp_dir/db_backup.sql" 2>/dev/null || error_messages+=("Failed to dump MySQL database.")
+                ;;
+            sqlite)
+                if [ -f "$sqlite_file" ]; then
+                    cp "$sqlite_file" "$temp_dir/db_backup.sqlite" || error_messages+=("Failed to copy SQLite database.")
+                else
+                    error_messages+=("SQLite database file not found at $sqlite_file.")
+                fi
+                ;;
+        esac
+    fi
 
     cp "$APP_DIR/.env" "$temp_dir/"
     cp "$APP_DIR/docker-compose.yml" "$temp_dir/"
     rsync -av --exclude 'xray-core' --exclude 'mysql' "$DATA_DIR/" "$temp_dir/marzban_data/" >/dev/null
 
     if ! tar -czf "$backup_file" -C "$temp_dir" .; then
-        local error_message="Failed to create backup archive."
-        error_messages+=("$error_message")
+        error_messages+=("Failed to create backup archive.")
+        exit 1
     fi
 
     rm -rf "$temp_dir"
@@ -512,8 +533,7 @@ backup_command() {
         return
     fi
 
-    colorized_echo green "Backup created: $backup_file"
-    send_backup_to_telegram "$backup_file" "${databases_included[*]}"
+    send_backup_to_telegram "$backup_file" 
 }
 
 
@@ -585,12 +605,12 @@ get_xray_core() {
     if ! command -v unzip >/dev/null 2>&1; then
         echo -e "\033[1;33mInstalling required packages...\033[0m"
         detect_os
-        install_package unzip >/dev/null 2>&1
+        install_package unzip
     fi
     if ! command -v wget >/dev/null 2>&1; then
         echo -e "\033[1;33mInstalling required packages...\033[0m"
         detect_os
-        install_package wget >/dev/null 2>&1
+        install_package wget
     fi
 
     mkdir -p $DATA_DIR/xray-core
@@ -600,14 +620,12 @@ get_xray_core() {
     xray_download_url="https://github.com/XTLS/Xray-core/releases/download/${selected_version}/${xray_filename}"
 
     echo -e "\033[1;33mDownloading Xray-core version ${selected_version}...\033[0m"
-    wget -q -O "${xray_filename}" "${xray_download_url}" >/dev/null 2>&1
+    wget -q -O "${xray_filename}" "${xray_download_url}"
 
     echo -e "\033[1;33mExtracting Xray-core...\033[0m"
     unzip -o "${xray_filename}" >/dev/null 2>&1
     rm "${xray_filename}"
 }
-
-
 
 # Function to update the Marzban Main core
 update_core_command() {
