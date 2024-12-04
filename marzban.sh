@@ -473,7 +473,18 @@ backup_command() {
     mkdir -p "$temp_dir"
 
     if [ -f "$ENV_FILE" ]; then
-        source "$ENV_FILE"
+        while IFS='=' read -r key value; do
+            if [[ -z "$key" || "$key" =~ ^# ]]; then
+                continue
+            fi
+            key=$(echo "$key" | xargs)
+            value=$(echo "$value" | xargs)
+            if [[ "$key" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]]; then
+                export "$key"="$value"
+            else
+                colorized_echo yellow "Skipping invalid line in .env: $key=$value"
+            fi
+        done < "$ENV_FILE"
     else
         error_messages+=("Environment file (.env) not found.")
         send_backup_error_to_telegram "${error_messages[*]}"
@@ -500,6 +511,7 @@ backup_command() {
     fi
 
     if [ -n "$db_type" ]; then
+        colorized_echo blue "Database detected: $db_type"
         case $db_type in
             mariadb)
                 docker exec "$container_name" mariadb-dump -u root -p"$MYSQL_ROOT_PASSWORD" --all-databases > "$temp_dir/db_backup.sql" 2>/dev/null || error_messages+=("Failed to dump MariaDB database.")
@@ -532,7 +544,7 @@ backup_command() {
         send_backup_error_to_telegram "${error_messages[*]}"
         return
     fi
-
+    colorized_echo green "Backup created: $backup_file"
     send_backup_to_telegram "$backup_file" 
 }
 
