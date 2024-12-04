@@ -659,6 +659,7 @@ backup_service() {
 
     echo "$cron_schedule $(which bash) -c '$APP_NAME backup' # marzban-backup-service" >> "$temp_cron"
 
+cat "$temp_cron"
 
     crontab "$temp_cron"
 
