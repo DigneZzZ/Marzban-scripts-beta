@@ -288,6 +288,7 @@ send_backup_error_to_telegram() {
 
 
     if [ -f "$log_file" ]; then
+
         curl -s -F chat_id="$BACKUP_TELEGRAM_CHAT_ID" \
             -F document=@"$log_file;filename=backup_error.log" \
             -F caption="📜 *Backup Error Log* - ${error_time}" \
@@ -295,8 +296,11 @@ send_backup_error_to_telegram() {
             "https://api.telegram.org/bot$BACKUP_TELEGRAM_BOT_KEY/sendDocument" >/dev/null 2>&1 && \
         colorized_echo green "Backup error log sent to Telegram." || \
         colorized_echo red "Failed to send backup error log to Telegram."
+    else
+        colorized_echo red "Log file not found: $log_file"
     fi
 }
+
 
 
 
