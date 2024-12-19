@@ -100,11 +100,14 @@ detect_os() {
     # Detect the operating system
     if [ -f /etc/lsb-release ]; then
         OS=$(lsb_release -si)
-        elif [ -f /etc/os-release ]; then
+    elif [ -f /etc/os-release ]; then
         OS=$(awk -F= '/^NAME/{print $2}' /etc/os-release | tr -d '"')
-        elif [ -f /etc/redhat-release ]; then
+        if [[ "$OS" == "Amazon Linux" ]]; then
+            OS="Amazon"
+        fi
+    elif [ -f /etc/redhat-release ]; then
         OS=$(cat /etc/redhat-release | awk '{print $1}')
-        elif [ -f /etc/arch-release ]; then
+    elif [ -f /etc/arch-release ]; then
         OS="Arch"
     else
         colorized_echo red "Unsupported operating system"
@@ -112,15 +115,18 @@ detect_os() {
     fi
 }
 
+
 detect_and_update_package_manager() {
     colorized_echo blue "Updating package manager"
     if [[ "$OS" == "Ubuntu"* ]] || [[ "$OS" == "Debian"* ]]; then
         PKG_MANAGER="apt-get"
         $PKG_MANAGER update -qq >/dev/null 2>&1
-    elif [[ "$OS" == "CentOS"* ]] || [[ "$OS" == "AlmaLinux"* ]]; then
+    elif [[ "$OS" == "CentOS"* ]] || [[ "$OS" == "AlmaLinux"* ]] || [[ "$OS" == "Amazon"* ]]; then
         PKG_MANAGER="yum"
         $PKG_MANAGER update -y -q >/dev/null 2>&1
-        $PKG_MANAGER install -y -q epel-release >/dev/null 2>&1
+        if [[ "$OS" != "Amazon" ]]; then
+            $PKG_MANAGER install -y -q epel-release >/dev/null 2>&1
+        fi
     elif [[ "$OS" == "Fedora"* ]]; then
         PKG_MANAGER="dnf"
         $PKG_MANAGER update -q -y >/dev/null 2>&1
@@ -149,7 +155,7 @@ detect_compose() {
     fi
 }
 
-install_package () {
+install_package() {
     if [ -z "$PKG_MANAGER" ]; then
         detect_and_update_package_manager
     fi
@@ -158,20 +164,20 @@ install_package () {
     colorized_echo blue "Installing $PACKAGE"
     if [[ "$OS" == "Ubuntu"* ]] || [[ "$OS" == "Debian"* ]]; then
         $PKG_MANAGER -y -qq install "$PACKAGE" >/dev/null 2>&1
-    elif [[ "$OS" == "CentOS"* ]] || [[ "$OS" == "AlmaLinux"* ]]; then
+    elif [[ "$OS" == "CentOS"* ]] || [[ "$OS" == "AlmaLinux"* ]] || [[ "$OS" == "Amazon"* ]]; then
         $PKG_MANAGER install -y -q "$PACKAGE" >/dev/null 2>&1
     elif [[ "$OS" == "Fedora"* ]]; then
         $PKG_MANAGER install -y -q "$PACKAGE" >/dev/null 2>&1
     elif [[ "$OS" == "Arch"* ]]; then
         $PKG_MANAGER -S --noconfirm --quiet "$PACKAGE" >/dev/null 2>&1
     elif [[ "$OS" == "openSUSE"* ]]; then
-        PKG_MANAGER="zypper"
         $PKG_MANAGER --quiet install -y "$PACKAGE" >/dev/null 2>&1
     else
         colorized_echo red "Unsupported operating system"
         exit 1
     fi
 }
+
 
 install_docker() {
     # Install Docker and Docker Compose using the official installation script
@@ -200,7 +206,11 @@ get_occupied_ports() {
     else
         colorized_echo yellow "Neither ss nor netstat found. Attempting to install net-tools."
         detect_os
-        install_package net-tools
+        if [[ "$OS" == "Amazon"* ]]; then
+            yum install -y net-tools >/dev/null 2>&1
+        else
+            install_package net-tools
+        fi
         if command -v netstat &>/dev/null; then
             OCCUPIED_PORTS=$(netstat -tuln | awk '{print $4}' | grep -Eo '[0-9]+$' | sort | uniq)
         else
@@ -209,6 +219,7 @@ get_occupied_ports() {
         fi
     fi
 }
+
 
 # Function to check if a port is occupied
 is_port_occupied() {
@@ -896,15 +907,20 @@ install_yq() {
     local yq_url="${base_url}/${yq_binary}"
     colorized_echo blue "Downloading yq from ${yq_url}..."
 
+    # Install curl or wget if neither is available
     if ! command -v curl &>/dev/null && ! command -v wget &>/dev/null; then
         colorized_echo yellow "Neither curl nor wget is installed. Attempting to install curl."
-        install_package curl || {
-            colorized_echo red "Failed to install curl. Please install curl or wget manually."
-            exit 1
-        }
+        if [[ "$OS" == "Amazon"* ]]; then
+            yum install -y curl >/dev/null 2>&1
+        else
+            install_package curl || {
+                colorized_echo red "Failed to install curl. Please install curl or wget manually."
+                exit 1
+            }
+        fi
     fi
 
-
+    # Download yq binary using curl or wget
     if command -v curl &>/dev/null; then
         if curl -L "$yq_url" -o /usr/local/bin/yq; then
             chmod +x /usr/local/bin/yq
@@ -923,18 +939,16 @@ install_yq() {
         fi
     fi
 
-
+    # Ensure /usr/local/bin is in PATH
     if ! echo "$PATH" | grep -q "/usr/local/bin"; then
         export PATH="/usr/local/bin:$PATH"
     fi
-
 
     hash -r
 
     if command -v yq &>/dev/null; then
         colorized_echo green "yq is ready to use."
     elif [ -x "/usr/local/bin/yq" ]; then
-
         colorized_echo yellow "yq is installed at /usr/local/bin/yq but not found in PATH."
         colorized_echo yellow "You can add /usr/local/bin to your PATH environment variable."
     else
