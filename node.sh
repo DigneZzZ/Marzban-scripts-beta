@@ -144,16 +144,21 @@ detect_and_update_package_manager() {
 
 
 detect_compose() {
-    # Check if docker compose command exists
     if docker compose >/dev/null 2>&1; then
         COMPOSE='docker compose'
-        elif docker-compose >/dev/null 2>&1; then
+    elif docker-compose >/dev/null 2>&1; then
         COMPOSE='docker-compose'
     else
-        colorized_echo red "docker compose not found"
-        exit 1
+        if [[ "$OS" == "Amazon"* ]]; then
+            yum install -y docker-compose-plugin >/dev/null 2>&1
+            COMPOSE='docker compose'
+        else
+            colorized_echo red "docker compose not found"
+            exit 1
+        fi
     fi
 }
+
 
 install_package() {
     if [ -z "$PKG_MANAGER" ]; then
