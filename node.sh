@@ -180,10 +180,17 @@ install_package() {
 
 
 install_docker() {
-    # Install Docker and Docker Compose using the official installation script
     colorized_echo blue "Installing Docker"
-    curl -fsSL https://get.docker.com | sh
-    colorized_echo green "Docker installed successfully"
+    if [[ "$OS" == "Amazon"* ]]; then
+        amazon-linux-extras enable docker >/dev/null 2>&1
+        yum install -y docker >/dev/null 2>&1
+        systemctl start docker
+        systemctl enable docker
+        colorized_echo green "Docker installed successfully on Amazon Linux"
+    else
+        curl -fsSL https://get.docker.com | sh
+        colorized_echo green "Docker installed successfully"
+    fi
 }
 
 install_marzban_node_script() {
