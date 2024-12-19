@@ -150,14 +150,24 @@ detect_compose() {
         COMPOSE='docker-compose'
     else
         if [[ "$OS" == "Amazon"* ]]; then
-            yum install -y docker-compose-plugin >/dev/null 2>&1
-            COMPOSE='docker compose'
+            colorized_echo blue "Docker Compose plugin not found. Attempting manual installation..."
+            mkdir -p /usr/libexec/docker/cli-plugins
+            curl -SL "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/libexec/docker/cli-plugins/docker-compose >/dev/null 2>&1
+            chmod +x /usr/libexec/docker/cli-plugins/docker-compose
+            if docker compose >/dev/null 2>&1; then
+                COMPOSE='docker compose'
+                colorized_echo green "Docker Compose plugin installed successfully"
+            else
+                colorized_echo red "Failed to install Docker Compose plugin. Please check your setup."
+                exit 1
+            fi
         else
             colorized_echo red "docker compose not found"
             exit 1
         fi
     fi
 }
+
 
 
 install_package() {
