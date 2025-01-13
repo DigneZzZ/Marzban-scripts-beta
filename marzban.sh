@@ -525,7 +525,22 @@ backup_command() {
         send_backup_error_to_telegram "${error_messages[*]}" "$log_file"
         exit 1
     fi
-
+    
+    if [ -f "$ENV_FILE" ]; then
+        MYSQL_ROOT_PASSWORD=$(grep -E '^MYSQL_ROOT_PASSWORD=' "$ENV_FILE" | cut -d '=' -f2 | xargs)
+        if [ -z "$MYSQL_ROOT_PASSWORD" ]; then
+            error_messages+=("MYSQL_ROOT_PASSWORD not set in $ENV_FILE.")
+            echo "MYSQL_ROOT_PASSWORD not set in $ENV_FILE." >> "$log_file"
+            send_backup_error_to_telegram "${error_messages[*]}" "$log_file"
+            exit 1
+        fi
+    else
+        error_messages+=("Environment file ($ENV_FILE) not found.")
+        echo "Environment file ($ENV_FILE) not found." >> "$log_file"
+        send_backup_error_to_telegram "${error_messages[*]}" "$log_file"
+        exit 1
+    fi
+    
     local db_type=""
     local sqlite_file=""
     if grep -q "image: mariadb" "$COMPOSE_FILE"; then
